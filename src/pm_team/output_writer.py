@@ -41,9 +41,13 @@ def get_base_output_dir(default: Optional[Path] = None) -> Path:
     return out
 
 
-def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], initiative: str, base_dir: Optional[Path] = None) -> Path:
-    base = get_base_output_dir(base_dir)
-    run_dir = base / f"{_timestamp()}_{_slug(initiative)}"
+def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], initiative: str, base_dir: Optional[Path] = None, project: str = "default") -> Path:
+    # Projects now create subdirectories under outputs/<project_slug>
+    base_root = get_base_output_dir(base_dir)
+    from .projects import project_dir, increment_run_counter  # local import to avoid circular
+    proj_dir = project_dir(project)
+    _ensure_dir(proj_dir)
+    run_dir = proj_dir / f"{_timestamp()}_{_slug(initiative)}"
     _ensure_dir(run_dir)
 
     plan = result.get("plan")
@@ -76,9 +80,12 @@ def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], i
     manifest = {
         "initiative": initiative,
         "created_at": datetime.now(UTC).isoformat(),
+        "project": project,
         "files": sorted([p.name for p in run_dir.iterdir() if p.is_file()]),
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+    # Update project metadata run counter
+    increment_run_counter(project)
     return run_dir
 
 __all__ = ["persist_run", "get_base_output_dir"]

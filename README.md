@@ -51,6 +51,7 @@ Dual-mode (local heuristic + real Autogen) multi-agent example for project manag
   tests/
     test_orchestration.py
   outputs/                     # Generated artifacts (gitignored)
+  <project_slug>/            # Per-project directory (audit_log.jsonl, project.json, run folders)
 ```
 
 Legacy directory `autogen_pm_team/` has been deprecated (left temporarily for migration reference). Source now lives under `src/pm_team`.
@@ -84,6 +85,7 @@ If no key is set, run proceeds in stub mode with a warning.
 - Real Autogen fallback detection
 - Raw LLM output capture
 - Structured artifact persistence into `outputs/` (plan, release, metrics, stakeholder summary, autogen raw)
+- Multi-project support (separate audit + runs under `outputs/<project>/`)
 
 ## Configuration
 
@@ -92,6 +94,7 @@ Edit `src/pm_team/config.py` or set env vars:
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL_NAME`
 - `PM_TEAM_OUTPUT_ROOT` (optional custom output directory)
+- `PM_TEAM_NONINTERACTIVE=1` (skip interactive project prompt; uses `default`)
 
 ## Roadmap
 
@@ -104,7 +107,7 @@ Edit `src/pm_team/config.py` or set env vars:
 
 ## Outputs
 
-Each run creates a timestamped folder under `outputs/` containing:
+Each run creates a timestamped folder under `outputs/<project_slug>/` containing:
 
 - `plan.json`
 - `release.json`
@@ -114,6 +117,7 @@ Each run creates a timestamped folder under `outputs/` containing:
 - `stakeholder_summary.txt`
 - `manifest.json`
 - `autogen/` raw LLM responses when `--autogen`
+Per project: `project.json` (metadata, run counter) and `audit_log.jsonl` (audit events).
 
 ## License
 

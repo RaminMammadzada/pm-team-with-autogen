@@ -1,7 +1,14 @@
 from __future__ import annotations
 import argparse
+import sys
+import os
 from .orchestration import PMTeamOrchestrator
 from .output_writer import persist_run
+from .projects import (
+    select_or_create_interactive,
+    ensure_project,
+    project_dir,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -9,13 +16,28 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("initiative", help="Initiative description")
     p.add_argument("--blocker", action="append", default=[], help="Add a blocker (repeatable)")
     p.add_argument("--autogen", action="store_true", help="Use real Autogen agents if available")
+    p.add_argument("--project", help="Project name to use (existing or new if --create-project)")
+    p.add_argument("--create-project", help="Force creation of a new project with given name")
     return p
 
 
 def main(argv=None):  # pragma: no cover - thin wrapper
     parser = build_parser()
     args = parser.parse_args(argv)
-    orchestrator = PMTeamOrchestrator()
+    # Determine project name (interactive if not provided)
+    project_name = None
+    if args.create_project:
+        project_name = args.create_project
+        ensure_project(project_name)
+    elif args.project:
+        project_name = args.project
+        # auto-create if not existing
+        ensure_project(project_name)
+    else:
+        project_name = select_or_create_interactive()
+
+    proj_audit = project_dir(project_name) / "audit_log.jsonl"
+    orchestrator = PMTeamOrchestrator(audit_path=str(proj_audit))
     single_blocker = args.blocker[0] if len(args.blocker) == 1 else None
     multi_blockers = args.blocker if len(args.blocker) > 1 else None
     result = orchestrator.run(args.initiative, blocker=single_blocker, blockers=multi_blockers)
@@ -47,7 +69,7 @@ def main(argv=None):  # pragma: no cover - thin wrapper
 
     print("\n=== Stakeholder Summary ===")
     print(result["stakeholder_summary"])
-    output_path = persist_run(result, autogen_payload, args.initiative)
+    output_path = persist_run(result, autogen_payload, args.initiative, project=project_name)
     print(f"\nArtifacts saved to: {output_path}")
 
     if autogen_payload:
