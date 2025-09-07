@@ -28,3 +28,9 @@
 {"event": "RELEASE_DRAFTED", "at": "2025-09-07T11:24:12.312140+00:00", "window": "2025-09-10 -> 2025-09-12"}
 {"event": "STAKEHOLDER_SUMMARY", "at": "2025-09-07T11:24:12.312196+00:00", "length": 232}
 {"event": "RUN_COMPLETED", "at": "2025-09-07T11:24:12.312267+00:00", "initiative": "Global billing consolidation --blocker PCI audit pending --autogen", "points": 23}
+{"event": "PLAN_CREATED", "at": "2025-09-07T11:42:24.963200+00:00", "task_count": 6}
+{"event": "BLOCKER_ADDED", "at": "2025-09-07T11:42:24.963323+00:00", "blocker": "networking"}
+{"event": "BLOCKER_ADDED", "at": "2025-09-07T11:42:24.963393+00:00", "blocker": "compliance"}
+{"event": "RELEASE_DRAFTED", "at": "2025-09-07T11:42:24.963468+00:00", "window": "2025-09-10 -> 2025-09-12"}
+{"event": "STAKEHOLDER_SUMMARY", "at": "2025-09-07T11:42:24.963518+00:00", "length": 211}
+{"event": "RUN_COMPLETED", "at": "2025-09-07T11:42:24.963570+00:00", "initiative": "Sample initiative to verify outputs", "points": 23}
