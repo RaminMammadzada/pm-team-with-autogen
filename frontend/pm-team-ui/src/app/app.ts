@@ -1,7 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { NgFor, NgIf, DatePipe } from '@angular/common';
 import { ToastContainerComponent } from './components/toast-container.component';
-import { DataService, ProjectMeta, RunMeta, PlanArtifact, ChatMessage } from './services/data.service';
+import {
+  DataService,
+  ProjectMeta,
+  RunMeta,
+  PlanArtifact,
+  ChatMessage,
+} from './services/data.service';
 import { NotificationService } from './services/notification.service';
 
 @Component({
@@ -49,6 +55,10 @@ export class App {
   protected readonly chatLoading = signal(false);
   protected readonly chatSending = signal(false);
   protected readonly chatInput = signal('');
+  protected readonly chatMode = signal<string | null>(null);
+  protected readonly blockerInput = signal('');
+  protected readonly reorderInput = signal('');
+  protected readonly systemUpdates = signal<string[]>([]);
 
   // Project creation UX state
   protected readonly creatingProject = signal(false);
@@ -187,9 +197,9 @@ export class App {
   protected selectRun(r: RunMeta) {
     this.selectedRun.set(r);
     this.plan.set(null);
-  this.chatMessages.set([]);
+    this.chatMessages.set([]);
     this.fetchPlan();
-  this.loadChat();
+    this.loadChat();
   }
 
   protected fetchPlan() {
@@ -242,23 +252,35 @@ export class App {
     ev.preventDefault();
     if (this.chatSending()) return;
     const text = this.chatInput().trim();
-    if (!text) return;
+    const mode = this.chatMode();
+    const blocker = this.blockerInput().trim();
+    const orderRaw = this.reorderInput().trim();
+    if (!text && !mode) return;
     const proj = this.selectedProject();
     const run = this.selectedRun();
     if (!proj || !run) return;
     // Optimistic append user message
-    const optimistic: ChatMessage = { sender: 'user', content: text, timestamp: new Date().toISOString() };
+    const optimistic: ChatMessage = {
+      sender: 'user',
+      content: text || `(mode: ${mode})`,
+      timestamp: new Date().toISOString(),
+    };
     this.chatMessages.set([...this.chatMessages(), optimistic]);
     this.chatSending.set(true);
     this.chatInput.set('');
+    const opts: any = {};
+    if (mode) opts.mode = mode;
+    if (mode === 'add_blocker' && blocker) opts.blocker = blocker;
+    if (mode === 'reprioritize' && orderRaw) opts.order = orderRaw.split(/[,\s]+/).filter(Boolean);
     this.data.sendChat(proj.slug, run.run_id, text).subscribe({
       next: (resp) => {
         if (resp.messages) this.chatMessages.set(resp.messages);
+        if (resp.system_updates) this.systemUpdates.set(resp.system_updates);
       },
       error: () => {
         this.notify.error('Chat send failed');
         // Roll back optimistic on failure
-        this.chatMessages.set(this.chatMessages().filter(m => m !== optimistic));
+        this.chatMessages.set(this.chatMessages().filter((m) => m !== optimistic));
       },
       complete: () => this.chatSending.set(false),
     });
@@ -266,5 +288,15 @@ export class App {
 
   protected roleClass(m: ChatMessage): string {
     return m.sender === 'user' ? 'msg user' : 'msg agent';
+  }
+
+  protected setMode(mode: string | null) {
+    this.chatMode.set(mode);
+  }
+
+  protected clearMode() {
+    this.chatMode.set(null);
+    this.blockerInput.set('');
+    this.reorderInput.set('');
   }
 }

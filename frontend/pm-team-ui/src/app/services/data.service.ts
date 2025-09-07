@@ -36,6 +36,7 @@ export interface ChatMessage {
 export interface ChatResponse {
   messages: ChatMessage[];
   reply?: ChatMessage;
+  system_updates?: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -82,10 +83,16 @@ export class DataService {
     return this.http.get<ChatResponse>(`${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`);
   }
 
-  sendChat(slug: string, runId: string, message: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(
-      `${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`,
-      { message },
-    );
+  sendChat(
+    slug: string,
+    runId: string,
+    message: string,
+    opts?: { mode?: string; blocker?: string; order?: string[] },
+  ): Observable<ChatResponse> {
+    const body: any = { message };
+    if (opts?.mode) body.mode = opts.mode;
+    if (opts?.blocker) body.blocker = opts.blocker;
+    if (opts?.order) body.order = opts.order;
+    return this.http.post<ChatResponse>(`${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`, body);
   }
 }
