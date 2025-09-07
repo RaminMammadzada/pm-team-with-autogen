@@ -96,12 +96,13 @@ export class DataService {
     slug: string,
     runId: string,
     message: string,
-    opts?: { mode?: string; blocker?: string; order?: string[] },
+    opts?: { mode?: string; blocker?: string; order?: string[]; statuses?: Record<string, string> },
   ): Observable<ChatResponse> {
     const body: any = { message };
     if (opts?.mode) body.mode = opts.mode;
     if (opts?.blocker) body.blocker = opts.blocker;
     if (opts?.order) body.order = opts.order;
+    if (opts?.statuses) body.statuses = opts.statuses;
     return this.http.post<ChatResponse>(
       `${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`,
       body,
@@ -109,9 +110,8 @@ export class DataService {
   }
 
   planDiff(slug: string, oldRun: string, newRun: string) {
-    return this.http.get<PlanDiff>(
-      `${this.env.apiBase}/projects/${slug}/plan-diff`,
-      { params: { old_run: oldRun, new_run: newRun } },
-    );
+    return this.http.get<PlanDiff>(`${this.env.apiBase}/projects/${slug}/plan-diff`, {
+      params: { old_run: oldRun, new_run: newRun },
+    });
   }
 }

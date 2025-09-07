@@ -16,7 +16,7 @@ import json
 from .projects import list_projects, project_dir, create_project
 from .output_writer import persist_run
 from .conversation import load_conversation, agent_reply
-from .plan_ops import add_blocker_task, reprioritize_tasks
+from .plan_ops import add_blocker_task, reprioritize_tasks, update_task_statuses
 from .plan_diff import diff_plans
 from .orchestration import PMTeamOrchestrator
 
@@ -197,9 +197,10 @@ def get_chat(slug: str, run_id: str):
 
 class ChatPost(BaseModel):
     message: str = Field(..., description="User prompt / query")
-    mode: str | None = Field(None, description="Optional action mode: status|risk|add_blocker|reprioritize")
+    mode: str | None = Field(None, description="Optional action mode: status|risk|add_blocker|reprioritize|update_status")
     blocker: str | None = Field(None, description="Blocker description when mode=add_blocker")
     order: list[str] | None = Field(None, description="Task ID ordering when mode=reprioritize (partial allowed)")
+    statuses: dict[str, str] | None = Field(None, description="Task status mapping when mode=update_status {T1: done}")
 
 
 @app.post("/projects/{slug}/runs/{run_id}/chat")
@@ -227,6 +228,14 @@ def post_chat(slug: str, run_id: str, payload: ChatPost):
         try:
             reprioritize_tasks(d, payload.order)
             system_notes.append(f"Reprioritized tasks (partial order applied): {', '.join(payload.order)}")
+        except FileNotFoundError:
+            raise HTTPException(409, "Plan not found for this run")
+    elif payload.mode == "update_status":
+        if not payload.statuses:
+            raise HTTPException(400, "statuses mapping required for mode=update_status")
+        try:
+            update_task_statuses(d, payload.statuses)
+            system_notes.append("Updated task statuses: " + ", ".join(f"{k}={v}" for k, v in payload.statuses.items()))
         except FileNotFoundError:
             raise HTTPException(409, "Plan not found for this run")
 

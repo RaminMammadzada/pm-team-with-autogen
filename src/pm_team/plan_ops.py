@@ -77,3 +77,29 @@ def reprioritize_tasks(run_dir: Path, ordered_ids: List[str]) -> Dict[str, Any]:
     return plan
 
 __all__ = ["add_blocker_task", "reprioritize_tasks", "load_plan", "save_plan"]
+from typing import Mapping
+
+
+def update_task_statuses(run_dir: Path, status_map: Mapping[str, str]) -> Dict[str, Any]:
+    """Update status field for tasks whose IDs appear in status_map.
+
+    status_map values are normalized to lowercase single tokens where possible.
+    Returns updated plan.
+    """
+    plan = load_plan(run_dir)
+    tasks: List[Dict[str, Any]] = plan.get("tasks", [])
+    norm = {k.strip(): v.strip() for k, v in status_map.items() if k and v}
+    changed = False
+    for t in tasks:
+        tid = t.get("id")
+        if tid in norm:
+            new_status = norm[tid]
+            if t.get("status") != new_status:
+                t["status"] = new_status
+                changed = True
+    if changed:
+        plan["updated_at"] = datetime.now(UTC).isoformat()  # type: ignore[name-defined]
+        save_plan(run_dir, plan)
+    return plan
+
+__all__.append("update_task_statuses")

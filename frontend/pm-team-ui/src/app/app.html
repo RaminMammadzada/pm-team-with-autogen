@@ -84,14 +84,20 @@
           <form (submit)="computeDiff($event)" class="diff-form">
             <label>
               Old
-              <select [value]="diffOldRun() || ''" (change)="diffOldRun.set($any($event.target).value)">
+              <select
+                [value]="diffOldRun() || ''"
+                (change)="diffOldRun.set($any($event.target).value)"
+              >
                 <option value="" disabled>Select</option>
                 <option *ngFor="let r of runs()" [value]="r.run_id">{{ runLabel(r) }}</option>
               </select>
             </label>
             <label>
               New
-              <select [value]="diffNewRun() || ''" (change)="diffNewRun.set($any($event.target).value)">
+              <select
+                [value]="diffNewRun() || ''"
+                (change)="diffNewRun.set($any($event.target).value)"
+              >
                 <option value="" disabled>Select</option>
                 <option *ngFor="let r of runs()" [value]="r.run_id">{{ runLabel(r) }}</option>
               </select>
@@ -103,7 +109,8 @@
           <div class="diff-result" *ngIf="planDiff() as d">
             <div class="agg" *ngIf="d.aggregate_risk_delta !== null">
               <strong>Aggregate Risk Δ:</strong>
-              {{ d.aggregate_risk_old }} → {{ d.aggregate_risk_new }} (Δ {{ d.aggregate_risk_delta }})
+              {{ d.aggregate_risk_old }} → {{ d.aggregate_risk_new }} (Δ
+              {{ d.aggregate_risk_delta }})
             </div>
             <div *ngIf="d.added.length">
               <strong>Added Tasks ({{ d.added.length }}):</strong>
@@ -130,7 +137,9 @@
                 </li>
               </ul>
             </div>
-            <div *ngIf="!d.added.length && !d.removed.length && !d.modified.length">No differences.</div>
+            <div *ngIf="!d.added.length && !d.removed.length && !d.modified.length">
+              No differences.
+            </div>
           </div>
         </details>
         <div class="plan-summary" *ngIf="planSummary() as s">
@@ -180,7 +189,7 @@
       </section>
       <section *ngIf="selectedRun() as run" class="chat-panel">
         <h3>Conversation</h3>
-  <div class="chat-messages" #chatContainer *ngIf="!chatLoading(); else loadingChatTmpl">
+        <div class="chat-messages" #chatContainer *ngIf="!chatLoading(); else loadingChatTmpl">
           <div *ngIf="!chatMessages().length" class="empty">
             No messages yet. Ask something about this initiative.
           </div>
@@ -221,6 +230,13 @@
             >
               Reprioritize
             </button>
+            <button
+              type="button"
+              (click)="setMode('update_status')"
+              [class.active]="chatMode() === 'update_status'"
+            >
+              Update Status
+            </button>
             <button type="button" (click)="clearMode()" *ngIf="chatMode()">×</button>
           </div>
           <div class="mode-fields" *ngIf="chatMode() === 'add_blocker'">
@@ -237,6 +253,14 @@
               placeholder="Task IDs order e.g. T4 T1 T3"
               [value]="reorderInput()"
               (input)="reorderInput.set($any($event.target).value)"
+            />
+          </div>
+          <div class="mode-fields" *ngIf="chatMode() === 'update_status'">
+            <input
+              type="text"
+              placeholder="Statuses e.g. T1=done T2=wip"
+              [value]="statusInput()"
+              (input)="statusInput.set($any($event.target).value)"
             />
           </div>
           <input

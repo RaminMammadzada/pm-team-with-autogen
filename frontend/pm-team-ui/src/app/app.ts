@@ -63,6 +63,7 @@ export class App {
   protected readonly diffNewRun = signal<string | null>(null);
   protected readonly diffLoading = signal(false);
   protected readonly planDiff = signal<any | null>(null);
+  protected readonly statusInput = signal('');
 
   // Chat container ref for auto-scrolling
   @ViewChild('chatContainer') private chatContainer?: ElementRef<HTMLDivElement>;
@@ -270,6 +271,7 @@ export class App {
     const mode = this.chatMode();
     const blocker = this.blockerInput().trim();
     const orderRaw = this.reorderInput().trim();
+    const statusRaw = this.statusInput().trim();
     if (!text && !mode) return;
     const proj = this.selectedProject();
     const run = this.selectedRun();
@@ -286,7 +288,19 @@ export class App {
     const opts: any = {};
     if (mode) opts.mode = mode;
     if (mode === 'add_blocker' && blocker) opts.blocker = blocker;
-    if (mode === 'reprioritize' && orderRaw) opts.order = orderRaw.split(/[,\s]+/).filter(Boolean);
+    if (mode === 'reprioritize' && orderRaw) opts.order = orderRaw.split(/[\s,]+/).filter(Boolean);
+    if (mode === 'update_status' && statusRaw) {
+      const map: Record<string, string> = {};
+      statusRaw.split(/[\s,]+/).forEach((pair) => {
+        const idx = pair.indexOf('=');
+        if (idx > 0) {
+          const k = pair.substring(0, idx).trim();
+          const v = pair.substring(idx + 1).trim();
+          if (k && v) map[k] = v;
+        }
+      });
+      if (Object.keys(map).length) opts.statuses = map;
+    }
     this.data.sendChat(proj.slug, run.run_id, text).subscribe({
       next: (resp) => {
         if (resp.messages) this.chatMessages.set(resp.messages);
