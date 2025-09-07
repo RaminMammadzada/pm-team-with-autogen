@@ -39,6 +39,15 @@ export interface ChatResponse {
   system_updates?: string[];
 }
 
+export interface PlanDiff {
+  added: any[];
+  removed: any[];
+  modified: { id: string; changes: Record<string, { old: any; new: any }> }[];
+  aggregate_risk_old?: number;
+  aggregate_risk_new?: number;
+  aggregate_risk_delta?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataService {
   private http = inject(HttpClient);
@@ -93,6 +102,16 @@ export class DataService {
     if (opts?.mode) body.mode = opts.mode;
     if (opts?.blocker) body.blocker = opts.blocker;
     if (opts?.order) body.order = opts.order;
-    return this.http.post<ChatResponse>(`${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`, body);
+    return this.http.post<ChatResponse>(
+      `${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`,
+      body,
+    );
+  }
+
+  planDiff(slug: string, oldRun: string, newRun: string) {
+    return this.http.get<PlanDiff>(
+      `${this.env.apiBase}/projects/${slug}/plan-diff`,
+      { params: { old_run: oldRun, new_run: newRun } },
+    );
   }
 }

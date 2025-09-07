@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, ViewChild, ElementRef, effect } from '@angular/core';
-import { NgFor, NgIf, DatePipe } from '@angular/common';
+import { NgFor, NgIf, DatePipe, KeyValuePipe } from '@angular/common';
 import { ToastContainerComponent } from './components/toast-container.component';
 import {
   DataService,
@@ -12,7 +12,7 @@ import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
-  imports: [NgFor, NgIf, DatePipe, ToastContainerComponent],
+  imports: [NgFor, NgIf, DatePipe, KeyValuePipe, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -59,6 +59,10 @@ export class App {
   protected readonly blockerInput = signal('');
   protected readonly reorderInput = signal('');
   protected readonly systemUpdates = signal<string[]>([]);
+  protected readonly diffOldRun = signal<string | null>(null);
+  protected readonly diffNewRun = signal<string | null>(null);
+  protected readonly diffLoading = signal(false);
+  protected readonly planDiff = signal<any | null>(null);
 
   // Chat container ref for auto-scrolling
   @ViewChild('chatContainer') private chatContainer?: ElementRef<HTMLDivElement>;
@@ -309,6 +313,23 @@ export class App {
     this.chatMode.set(null);
     this.blockerInput.set('');
     this.reorderInput.set('');
+  }
+
+  protected computeDiff(ev: Event) {
+    ev.preventDefault();
+    const proj = this.selectedProject();
+    if (!proj || !this.diffOldRun() || !this.diffNewRun()) return;
+    if (this.diffOldRun() === this.diffNewRun()) {
+      this.notify.warn('Select two different runs');
+      return;
+    }
+    this.diffLoading.set(true);
+    this.planDiff.set(null);
+    this.data.planDiff(proj.slug, this.diffOldRun()!, this.diffNewRun()!).subscribe({
+      next: (d) => this.planDiff.set(d),
+      error: () => this.notify.error('Cannot load diff'),
+      complete: () => this.diffLoading.set(false),
+    });
   }
 
   private scrollChatToBottom() {

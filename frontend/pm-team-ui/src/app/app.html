@@ -79,6 +79,60 @@
 
       <section *ngIf="selectedRun() as run">
         <h2>Initiative Plan</h2>
+        <details class="diff-panel" *ngIf="runs().length > 1">
+          <summary>Plan Diff</summary>
+          <form (submit)="computeDiff($event)" class="diff-form">
+            <label>
+              Old
+              <select [value]="diffOldRun() || ''" (change)="diffOldRun.set($any($event.target).value)">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let r of runs()" [value]="r.run_id">{{ runLabel(r) }}</option>
+              </select>
+            </label>
+            <label>
+              New
+              <select [value]="diffNewRun() || ''" (change)="diffNewRun.set($any($event.target).value)">
+                <option value="" disabled>Select</option>
+                <option *ngFor="let r of runs()" [value]="r.run_id">{{ runLabel(r) }}</option>
+              </select>
+            </label>
+            <button type="submit" [disabled]="diffLoading() || !diffOldRun() || !diffNewRun()">
+              {{ diffLoading() ? 'Computing…' : 'Diff' }}
+            </button>
+          </form>
+          <div class="diff-result" *ngIf="planDiff() as d">
+            <div class="agg" *ngIf="d.aggregate_risk_delta !== null">
+              <strong>Aggregate Risk Δ:</strong>
+              {{ d.aggregate_risk_old }} → {{ d.aggregate_risk_new }} (Δ {{ d.aggregate_risk_delta }})
+            </div>
+            <div *ngIf="d.added.length">
+              <strong>Added Tasks ({{ d.added.length }}):</strong>
+              <ul>
+                <li *ngFor="let t of d.added">{{ t.id }} – {{ t.title }}</li>
+              </ul>
+            </div>
+            <div *ngIf="d.removed.length">
+              <strong>Removed Tasks ({{ d.removed.length }}):</strong>
+              <ul>
+                <li *ngFor="let t of d.removed">{{ t.id }} – {{ t.title }}</li>
+              </ul>
+            </div>
+            <div *ngIf="d.modified.length">
+              <strong>Modified Tasks ({{ d.modified.length }}):</strong>
+              <ul>
+                <li *ngFor="let m of d.modified">
+                  <code>{{ m.id }}</code>
+                  <ul>
+                    <li *ngFor="let entry of m.changes | keyvalue">
+                      {{ entry.key }}: {{ entry.value.old }} → {{ entry.value.new }}
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <div *ngIf="!d.added.length && !d.removed.length && !d.modified.length">No differences.</div>
+          </div>
+        </details>
         <div class="plan-summary" *ngIf="planSummary() as s">
           <div><strong>Tasks:</strong> {{ s.total }}</div>
           <div><strong>Avg Risk:</strong> {{ fmt(s.avgRisk) }}</div>

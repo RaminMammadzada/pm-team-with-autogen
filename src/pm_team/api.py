@@ -17,6 +17,7 @@ from .projects import list_projects, project_dir, create_project
 from .output_writer import persist_run
 from .conversation import load_conversation, agent_reply
 from .plan_ops import add_blocker_task, reprioritize_tasks
+from .plan_diff import diff_plans
 from .orchestration import PMTeamOrchestrator
 
 app = FastAPI(title="PM Team API", version="0.1.0")
@@ -156,6 +157,33 @@ def get_artifact(slug: str, run_id: str, name: str):
         except Exception:
             return JSONResponse({"error": "invalid json"}, status_code=500)
     return PlainTextResponse(d.read_text())
+
+
+@app.get("/projects/{slug}/plan-diff")
+def get_plan_diff(slug: str, old_run: str, new_run: str):
+    """Compute diff between plan.json of two runs.
+
+    Query params: old_run, new_run
+    """
+    old_dir = project_dir(slug) / old_run
+    new_dir = project_dir(slug) / new_run
+    if not old_dir.exists() or not new_dir.exists():
+        raise HTTPException(404, "One or both runs not found")
+    old_plan = None
+    new_plan = None
+    try:
+        op = old_dir / "plan.json"
+        if op.exists():
+            old_plan = json.loads(op.read_text())
+    except Exception:
+        old_plan = None
+    try:
+        np = new_dir / "plan.json"
+        if np.exists():
+            new_plan = json.loads(np.read_text())
+    except Exception:
+        new_plan = None
+    return diff_plans(old_plan, new_plan)
 
 
 @app.get("/projects/{slug}/runs/{run_id}/chat")
