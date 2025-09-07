@@ -151,6 +151,8 @@ def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, 
     domain_summary = _build_domain_summary(run_dir)
 
     reply_text: str
+    is_status_query = any(k in user_text.lower() for k in ["what is happening", "status", "summary", "progress", "update"])
+
     if _use_autogen() and _llm_available():
         try:
             reply_text = autogen_generate(domain_summary, history, user_text)
@@ -198,7 +200,12 @@ def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, 
         )
         for m in history:
             agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
-        reply_text = agent.respond(user_text).content + "\n(Set OPENAI_API_KEY for LLM responses)"
+        base_reply = agent.respond(user_text).content
+        # Suppress noisy environment hint for common status queries to keep UX clean
+        if is_status_query:
+            reply_text = base_reply
+        else:
+            reply_text = base_reply + "\n(Set OPENAI_API_KEY for LLM responses)"
 
     reply_message = {"sender": "agent", "content": reply_text, "timestamp": _now_iso()}
     history = append_messages(run_dir, [reply_message])
