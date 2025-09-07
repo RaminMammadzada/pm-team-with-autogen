@@ -126,7 +126,7 @@
       </section>
       <section *ngIf="selectedRun() as run" class="chat-panel">
         <h3>Conversation</h3>
-        <div class="chat-messages" *ngIf="!chatLoading(); else loadingChatTmpl">
+  <div class="chat-messages" #chatContainer *ngIf="!chatLoading(); else loadingChatTmpl">
           <div *ngIf="!chatMessages().length" class="empty">
             No messages yet. Ask something about this initiative.
           </div>
@@ -143,18 +143,48 @@
         </ng-template>
         <form class="chat-input" (submit)="sendChat($event)">
           <div class="mode-bar">
-            <button type="button" (click)="setMode('status')" [class.active]="chatMode()==='status'">Status</button>
-            <button type="button" (click)="setMode('risk')" [class.active]="chatMode()==='risk'">Risk</button>
-            <button type="button" (click)="setMode('add_blocker')" [class.active]="chatMode()==='add_blocker'">Add Blocker</button>
-            <button type="button" (click)="setMode('reprioritize')" [class.active]="chatMode()==='reprioritize'">Reprioritize</button>
+            <button
+              type="button"
+              (click)="setMode('status')"
+              [class.active]="chatMode() === 'status'"
+            >
+              Status
+            </button>
+            <button type="button" (click)="setMode('risk')" [class.active]="chatMode() === 'risk'">
+              Risk
+            </button>
+            <button
+              type="button"
+              (click)="setMode('add_blocker')"
+              [class.active]="chatMode() === 'add_blocker'"
+            >
+              Add Blocker
+            </button>
+            <button
+              type="button"
+              (click)="setMode('reprioritize')"
+              [class.active]="chatMode() === 'reprioritize'"
+            >
+              Reprioritize
+            </button>
             <button type="button" (click)="clearMode()" *ngIf="chatMode()">×</button>
           </div>
-          <div class="mode-fields" *ngIf="chatMode()==='add_blocker'">
-            <input type="text" placeholder="Blocker description" [value]="blockerInput()" (input)="blockerInput.set($any($event.target).value)" />
+          <div class="mode-fields" *ngIf="chatMode() === 'add_blocker'">
+            <input
+              type="text"
+              placeholder="Blocker description"
+              [value]="blockerInput()"
+              (input)="blockerInput.set($any($event.target).value)"
+            />
           </div>
-            <div class="mode-fields" *ngIf="chatMode()==='reprioritize'">
-              <input type="text" placeholder="Task IDs order e.g. T4 T1 T3" [value]="reorderInput()" (input)="reorderInput.set($any($event.target).value)" />
-            </div>
+          <div class="mode-fields" *ngIf="chatMode() === 'reprioritize'">
+            <input
+              type="text"
+              placeholder="Task IDs order e.g. T4 T1 T3"
+              [value]="reorderInput()"
+              (input)="reorderInput.set($any($event.target).value)"
+            />
+          </div>
           <input
             type="text"
             placeholder="Ask or refine (optional when using a mode)"
@@ -163,7 +193,7 @@
             (input)="chatInput.set($any($event.target).value)"
           />
           <button type="submit" [disabled]="chatSending() || (!chatInput().trim() && !chatMode())">
-            {{ chatSending() ? 'Sending…' : (chatMode() ? 'Execute' : 'Send') }}
+            {{ chatSending() ? 'Sending…' : chatMode() ? 'Execute' : 'Send' }}
           </button>
         </form>
         <div class="system-updates" *ngIf="systemUpdates().length">

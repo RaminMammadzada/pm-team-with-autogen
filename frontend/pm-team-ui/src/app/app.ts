@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ViewChild, ElementRef, effect } from '@angular/core';
 import { NgFor, NgIf, DatePipe } from '@angular/common';
 import { ToastContainerComponent } from './components/toast-container.component';
 import {
@@ -60,6 +60,9 @@ export class App {
   protected readonly reorderInput = signal('');
   protected readonly systemUpdates = signal<string[]>([]);
 
+  // Chat container ref for auto-scrolling
+  @ViewChild('chatContainer') private chatContainer?: ElementRef<HTMLDivElement>;
+
   // Project creation UX state
   protected readonly creatingProject = signal(false);
   protected readonly newProjectName = signal('');
@@ -81,6 +84,14 @@ export class App {
 
   constructor() {
     this.fetchProjects();
+    // Auto-scroll effect when chat messages change
+    effect(() => {
+      // Depend on messages length & sending state
+      const _len = this.chatMessages().length;
+      const _sending = this.chatSending();
+      // Defer to next microtask so DOM has rendered new messages
+      queueMicrotask(() => this.scrollChatToBottom());
+    });
   }
 
   protected createProject(ev: Event) {
@@ -298,5 +309,15 @@ export class App {
     this.chatMode.set(null);
     this.blockerInput.set('');
     this.reorderInput.set('');
+  }
+
+  private scrollChatToBottom() {
+    const el = this.chatContainer?.nativeElement;
+    if (!el) return;
+    try {
+      el.scrollTop = el.scrollHeight;
+    } catch (_) {
+      /* noop */
+    }
   }
 }
