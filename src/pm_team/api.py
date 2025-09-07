@@ -16,6 +16,7 @@ import json
 from .projects import list_projects, project_dir, create_project
 from .output_writer import persist_run
 from .conversation import load_conversation, agent_reply
+from .plan_ops import add_blocker_task, reprioritize_tasks
 from .orchestration import PMTeamOrchestrator
 
 app = FastAPI(title="PM Team API", version="0.1.0")
@@ -168,18 +169,45 @@ def get_chat(slug: str, run_id: str):
 
 class ChatPost(BaseModel):
     message: str = Field(..., description="User prompt / query")
+    mode: str | None = Field(None, description="Optional action mode: status|risk|add_blocker|reprioritize")
+    blocker: str | None = Field(None, description="Blocker description when mode=add_blocker")
+    order: list[str] | None = Field(None, description="Task ID ordering when mode=reprioritize (partial allowed)")
 
 
 @app.post("/projects/{slug}/runs/{run_id}/chat")
 def post_chat(slug: str, run_id: str, payload: ChatPost):
     content = (payload.message or "").strip()
-    if not content:
+    if not content and not payload.mode:
         raise HTTPException(400, "Empty message")
     d = project_dir(slug) / run_id
     if not d.exists():
         raise HTTPException(404, "Run not found")
-    reply, history = agent_reply(d, slug, content)
-    return {"reply": reply, "messages": history}
+
+    # Pre-action mutations (deterministic) before LLM response
+    system_notes: list[str] = []
+    if payload.mode == "add_blocker":
+        if not payload.blocker:
+            raise HTTPException(400, "blocker field required for mode=add_blocker")
+        try:
+            add_blocker_task(d, payload.blocker)
+            system_notes.append(f"Added blocker and mitigation task: {payload.blocker}")
+        except FileNotFoundError:
+            raise HTTPException(409, "Plan not found for this run")
+    elif payload.mode == "reprioritize":
+        if not payload.order:
+            raise HTTPException(400, "order list required for mode=reprioritize")
+        try:
+            reprioritize_tasks(d, payload.order)
+            system_notes.append(f"Reprioritized tasks (partial order applied): {', '.join(payload.order)}")
+        except FileNotFoundError:
+            raise HTTPException(409, "Plan not found for this run")
+
+    # Augment user content with system notes (so agent can explain change)
+    augmented = content
+    if system_notes:
+        augmented = (content + "\n\n" if content else "") + "SYSTEM_UPDATES:\n" + "\n".join(system_notes)
+    reply, history = agent_reply(d, slug, augmented or content)
+    return {"reply": reply, "messages": history, "system_updates": system_notes}
 
 
 # Simple health
