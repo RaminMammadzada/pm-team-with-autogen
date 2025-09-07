@@ -1,0 +1,52 @@
+<div class="app-shell">
+  <header>
+    <h1>{{ title() }}</h1>
+    <button (click)="fetchProjects()" aria-label="Refresh projects">↻ Refresh</button>
+  </header>
+  <section class="layout">
+    <aside>
+      <h2>Projects</h2>
+      <div *ngIf="loadingProjects()">Loading projects…</div>
+      <ul>
+        <li *ngFor="let p of projects()" [class.active]="p.slug === selectedProject()?.slug">
+          <button (click)="selectProject(p)">{{ p.name || p.slug }}</button>
+        </li>
+      </ul>
+    </aside>
+    <main>
+      <section *ngIf="selectedProject() as proj">
+        <h2>Runs – {{ proj.slug }}</h2>
+        <div *ngIf="loadingRuns()">Loading runs…</div>
+        <ul class="runs">
+          <li *ngFor="let r of runs()" [class.active]="r.run_id === selectedRun()?.run_id">
+            <button (click)="selectRun(r)">{{ r.run_id }}</button>
+          </li>
+        </ul>
+      </section>
+
+      <section *ngIf="selectedRun() as run">
+        <h2>Plan ({{ run.run_id }})</h2>
+        <div *ngIf="loadingPlan()">Loading plan…</div>
+        <table *ngIf="!loadingPlan() && planTasks().length" class="tasks">
+          <thead>
+            <tr>
+              <th>ID</th><th>Title</th><th>Type</th><th>Priority</th><th>WSJF</th><th>Risk</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of planTasks()">
+              <td>{{ t.id }}</td>
+              <td>{{ t.title }}</td>
+              <td>{{ t.type }}</td>
+              <td>{{ t.priority }}</td>
+              <td>{{ t.wsjf_score }}</td>
+              <td>{{ t.risk_exposure }}</td>
+              <td>{{ t.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div *ngIf="!loadingPlan() && !planTasks().length">No tasks in plan.</div>
+      </section>
+    </main>
+  </section>
+</div>
