@@ -6,7 +6,7 @@ Phased plan to evolve the stub planner into a richer, semi-realistic project man
 
 - [x] WSJF scoring (business value, time criticality, risk reduction, job size)
 - [x] Add task fields: `type`, `priority`, `acceptance` placeholder
-- [x] Risk model: probability & impact, exposure = prob * impact * points
+- [x] Risk model: probability & impact, exposure = prob _ impact _ points
 - [ ] Velocity overrides via `PM_TEAM_VELOCITY`
 - [ ] Sprint length override via `PM_TEAM_SPRINT_DAYS`
 - [ ] Forecast (sprint count + estimated completion date) `--forecast`

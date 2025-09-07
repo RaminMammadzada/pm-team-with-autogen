@@ -173,23 +173,25 @@ Each run creates a timestamped folder under `outputs/<project_slug>/` containing
   Per project: `project.json` (metadata, run counter) and `audit_log.jsonl` (audit events).
 
 ## Testing
+
 ## Web UI (Angular + FastAPI)
 
 Directory `frontend/pm-team-ui` contains an Angular 20 scaffold (standalone components). A lightweight FastAPI backend (`pm_team.api`) exposes project and run artifacts:
 
 Endpoints:
+
 - `GET /projects`
 - `GET /projects/{slug}/runs`
 - `GET /projects/{slug}/runs/{run_id}`
 - `GET /projects/{slug}/runs/{run_id}/artifact/{name}`
 
 Run backend (development):
+
 ```bash
 uvicorn pm_team.api:app --reload
 ```
 
 Then adapt Angular app to call these endpoints (add service under `frontend/pm-team-ui/src/app`).
-
 
 ```bash
 pytest -q
