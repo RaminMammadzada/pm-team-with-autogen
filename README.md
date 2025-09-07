@@ -117,11 +117,8 @@ pm-team placeholder --list-projects
 ls outputs
 cat outputs/finance_revamp/project.json
 
-Prune old runs keeping last 5 only (per project):
-
-```bash
+# Prune old runs keeping last 5 only (per project) and emit JSON
 pm-team --project FinanceRevamp "Refactor payment gateway" --max-runs 5 --json > latest.json
-```
 ```
 
 Non-interactive default project (CI / scripts):
@@ -157,9 +154,9 @@ PM_TEAM_NONINTERACTIVE=1 pm-team "Nightly regression hardening"
 1. Parse & merge Autogen JSON into internal model.
 2. Add retrieval augmentation.
 3. Implement probabilistic risk delay estimator.
-4. Add CLI subcommands and JSON output flag.
-5. Add retention policy for `outputs/` directory.
-6. Web dashboard for live visualization.
+4. Concurrency safety (file locking) for parallel runs.
+5. Web dashboard for live visualization.
+6. Optional Autogen streaming + JSON schema validation.
 
 ## Outputs
 
@@ -183,11 +180,11 @@ pytest -q
 
 Add `-k project` to run only project-related tests once added.
 
-## Retention & Cleanup (Planned)
+## Retention & Cleanup
 
-- Add a `--max-runs N` to prune oldest run folders per project.
-- Rotate `audit_log.jsonl` when surpassing size threshold (e.g., 10MB).
-- Optional `pm-team --prune` command (future) to enforce retention policy.
+- `--max-runs N` prunes oldest run folders (implemented).
+- Set `PM_TEAM_AUDIT_MAX_BYTES` to rotate `audit_log.jsonl` once it exceeds the byte threshold (creates timestamped rollover files).
+- Future: `pm-team --prune` command for explicit retention enforcement.
 
 ## License
 

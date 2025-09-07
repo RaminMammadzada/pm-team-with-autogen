@@ -66,3 +66,19 @@ def test_cli_json_and_prune(tmp_path, monkeypatch, capsys):
     import json as _json
     parsed = _json.loads(out[-1])
     assert parsed["project"] == "PruneProj" and "plan" in parsed
+
+
+def test_audit_log_rotation(tmp_path, monkeypatch):
+    monkeypatch.setenv("PM_TEAM_OUTPUT_ROOT", str(tmp_path / "outs"))
+    monkeypatch.setenv("PM_TEAM_AUDIT_MAX_BYTES", "400")  # very small to force rotation quickly
+    from pm_team.projects import ensure_project, project_dir
+    ensure_project("RotateProj")
+    audit_path = project_dir("RotateProj") / "audit_log.jsonl"
+    from pm_team.orchestration import PMTeamOrchestrator
+    orch = PMTeamOrchestrator(audit_path=str(audit_path))
+    # Generate multiple runs to exceed size
+    for i in range(10):
+        orch.run(f"Rotation Initiative {i}")
+    # Check at least one rotated file exists
+    rotated = list(audit_path.parent.glob("audit_log.*.jsonl"))
+    assert rotated, "Expected rotated audit log files"

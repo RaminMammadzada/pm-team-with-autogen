@@ -25,15 +25,43 @@ class EventBus:
 
 
 class AuditLogger:
-    """Append-only JSONL audit logger."""
+    """Append-only JSONL audit logger with optional size-based rotation.
+
+    Rotation: If env PM_TEAM_AUDIT_MAX_BYTES is set (int) and file exceeds that size after a write,
+    it's renamed to audit_log.<timestamp>.jsonl and a fresh file is started.
+    """
 
     def __init__(self, path: str = "audit_log.jsonl"):
         self.path = path
+
+    def _maybe_rotate(self):
+        import os
+        max_bytes = os.getenv("PM_TEAM_AUDIT_MAX_BYTES")
+        if not max_bytes:
+            return
+        try:
+            limit = int(max_bytes)
+        except ValueError:
+            return
+        try:
+            size = os.path.getsize(self.path)
+        except OSError:
+            return
+        if size <= limit:
+            return
+        # rotate
+        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        rotated = f"{self.path.rsplit('.jsonl', 1)[0]}.{ts}.jsonl"
+        try:
+            os.replace(self.path, rotated)
+        except OSError:
+            pass
 
     def log(self, event: str, data: Dict[str, Any]):
         line = json.dumps({"event": event, "at": datetime.now(UTC).isoformat(), **data}, ensure_ascii=False)
         with open(self.path, "a", encoding="utf-8") as f:
             f.write(line + "\n")
+        self._maybe_rotate()
 
 
 class MetricsAccumulator:
