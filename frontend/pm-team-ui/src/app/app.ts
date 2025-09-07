@@ -29,6 +29,24 @@ export class App {
   protected readonly plan = signal<PlanArtifact | null>(null);
   protected readonly planTasks = computed(() => this.plan()?.tasks || []);
 
+  // Project creation UX state
+  protected readonly creatingProject = signal(false);
+  protected readonly newProjectName = signal('');
+  protected readonly newProjectSlug = computed(() =>
+    this.newProjectName()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_\- ]+/g, '')
+      .replace(/\s+/g, '_') || ''
+  );
+  protected readonly tagInput = signal('');
+  protected readonly tagChips = computed(() =>
+    this.tagInput()
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t, i, arr) => t && arr.indexOf(t) === i)
+  );
+
   constructor() {
     this.fetchProjects();
   }
@@ -42,6 +60,7 @@ export class App {
       this.notify.warn('Name is required');
       return;
     }
+    if (this.creatingProject()) return; // guard
     const tagsRaw = (fd.get('tags') || '').toString().trim();
     const tags = tagsRaw
       ? tagsRaw
@@ -49,6 +68,7 @@ export class App {
           .map((t) => t.trim())
           .filter(Boolean)
       : undefined;
+    this.creatingProject.set(true);
     this.data
       .createProject({
         name,
@@ -62,14 +82,20 @@ export class App {
         next: (proj) => {
           this.notify.info('Project created');
           form.reset();
+          this.newProjectName.set('');
+          this.tagInput.set('');
           this.fetchProjects();
           // select the newly created project
           setTimeout(() => {
             const found = this.projects().find((p) => p.slug === (proj as any).slug);
             if (found) this.selectProject(found);
+            // Collapse details element if open
+            const details = form.closest('details');
+            if (details) (details as HTMLDetailsElement).open = false;
           }, 300);
         },
         error: () => this.notify.error('Cannot create project'),
+        complete: () => this.creatingProject.set(false),
       });
 
     function opt(v: FormDataEntryValue | null): string | undefined {
@@ -77,6 +103,14 @@ export class App {
       const s = v.toString().trim();
       return s ? s : undefined;
     }
+  }
+
+  // Live update handlers (bound in template)
+  protected onNameInput(value: string) {
+    this.newProjectName.set(value);
+  }
+  protected onTagsInput(value: string) {
+    this.tagInput.set(value);
   }
 
   protected fetchProjects() {

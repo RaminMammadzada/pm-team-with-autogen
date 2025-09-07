@@ -67,6 +67,17 @@ details.create-form form {
   padding: 0.65rem 0.7rem 0.75rem;
   grid-template-columns: 1fr;
 }
+details.create-form form .wide { grid-column: 1 / -1; }
+details.create-form small.hint {
+  font-size: 0.55rem;
+  color: #666;
+  margin-top: 0.15rem;
+}
+details.create-form small.hint code { font-size: 0.55rem; background:#f1f1f1; padding:0.1rem 0.25rem; border-radius:3px; }
+details.create-form .chips { display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:0.35rem; }
+details.create-form .chip { background:#eef3ff; color:#1d3c78; padding:0.15rem 0.45rem; border-radius:12px; font-size:0.55rem; line-height:1; border:1px solid #c9dafc; }
+details.create-form button[disabled] { opacity:.55; cursor:not-allowed; box-shadow:none; }
+details.create-form button[disabled]:hover { background:#3758d5; }
 details.create-form label {
   display: flex;
   flex-direction: column;
@@ -137,6 +148,7 @@ details.create-form button[type='submit'] {
   details.create-form label:has(textarea) {
     grid-column: 1 / -1;
   }
+  details.create-form label.wide { grid-column: 1 / -1; }
   details.create-form button[type='submit'] {
     grid-column: 1 / -1;
   }
