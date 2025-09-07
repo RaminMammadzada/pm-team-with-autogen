@@ -1,27 +1,9 @@
-"""Output persistence utilities for PM Team runs.
-
-Separation of concerns:
-- This module knows ONLY about serialization & filesystem layout.
-- It does NOT construct domain objects (plan/release/etc.) or invoke LLMs.
-- Public function: persist_run(result, autogen_raw, initiative, base_dir)
-
-Directory layout (default base: autogen_pm_team/outputs):
-  outputs/
-    20250907_153012_ai_driven_real_time_anomaly_detection/
-        plan.json
-        release.json
-        metrics.json
-        stakeholder_summary.txt
-        aggregate_risk.txt (single line numeric)
-        blockers.txt (one blocker per line if any)
-        autogen/
-            planner_raw.txt
-            release_raw.txt
-            stakeholder_raw.txt
-
-An environment variable PM_TEAM_OUTPUT_ROOT can override the base output directory.
-"""
 from __future__ import annotations
+"""Output persistence utilities.
+
+Default location: project root `outputs/` (created automatically if absent).
+Override with environment variable: `PM_TEAM_OUTPUT_ROOT`.
+"""
 from pathlib import Path
 from typing import Dict, Any, Optional
 import json
@@ -50,8 +32,13 @@ def _ensure_dir(path: Path) -> Path:
 def get_base_output_dir(default: Optional[Path] = None) -> Path:
     override = os.getenv("PM_TEAM_OUTPUT_ROOT")
     if override:
-        return Path(override).expanduser().resolve()
-    return default or Path(__file__).resolve().parents[1] / "outputs"
+        p = Path(override).expanduser().resolve()
+        _ensure_dir(p)
+        return p
+    root = Path(__file__).resolve().parents[2]
+    out = default or root / "outputs"
+    _ensure_dir(out)
+    return out
 
 
 def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], initiative: str, base_dir: Optional[Path] = None) -> Path:
@@ -59,7 +46,6 @@ def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], i
     run_dir = base / f"{_timestamp()}_{_slug(initiative)}"
     _ensure_dir(run_dir)
 
-    # Core artifacts
     plan = result.get("plan")
     release = result.get("release")
     metrics = result.get("metrics")
@@ -81,21 +67,18 @@ def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], i
     if stakeholder_summary:
         (run_dir / "stakeholder_summary.txt").write_text(stakeholder_summary)
 
-    # Raw Autogen outputs
     if autogen_raw:
         auto_dir = _ensure_dir(run_dir / "autogen")
         for key, val in autogen_raw.items():
             text = val if isinstance(val, str) else str(val)
             (auto_dir / f"{key}_raw.txt").write_text(text)
 
-    # Write manifest
     manifest = {
         "initiative": initiative,
         "created_at": datetime.now(UTC).isoformat(),
         "files": sorted([p.name for p in run_dir.iterdir() if p.is_file()]),
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
-
     return run_dir
 
 __all__ = ["persist_run", "get_base_output_dir"]

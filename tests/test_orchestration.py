@@ -1,20 +1,16 @@
-import json
-from pathlib import Path
-from autogen_pm_team.pm_team.orchestration import PMTeamOrchestrator
+from pm_team.orchestration import PMTeamOrchestrator
 
 
-def test_basic_run(tmp_path: Path):
+def test_basic_run(tmp_path):
     audit_file = tmp_path / "audit.jsonl"
     orch = PMTeamOrchestrator(audit_path=str(audit_file))
     result = orch.run("Test Initiative", blocker="Env setup delay")
 
-    # Basic structural assertions
     assert "plan" in result and "release" in result and "stakeholder_summary" in result
     assert len(result["plan"]["tasks"]) >= 6
-    assert "metrics" in result and result["metrics"]["plans_created"] == 1
+    assert result["metrics"]["plans_created"] == 1
     assert result["metrics"]["blockers_recorded"] == 1
 
-    # Audit file should have lines
     content = audit_file.read_text().strip().splitlines()
     assert any("PLAN_CREATED" in line for line in content)
     assert any("BLOCKER_ADDED" in line for line in content)

@@ -15,5 +15,7 @@ htmlcov/
 /.idea/
 /.vscode/*
 !/.vscode/settings.json
-autogen_pm_team/outputs/
+outputs/
 audit_log.jsonl
+dist/
+*.egg-info/

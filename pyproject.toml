@@ -1,17 +1,30 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "autogen-pm-team"
+name = "pm-team"
 version = "0.1.0"
-description = "Lightweight simulated Autogen project management agent team"
+description = "Multi-agent (stub + optional Autogen) PM workflow demo"
 authors = [{name = "Example", email = "example@example.com"}]
-readme = "autogen_pm_team/README.md"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    # Add real autogen deps here when needed
+    "autogen>=0.3.0",
+    "openai>=1.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+pm-team = "pm_team.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
+addopts = "-q"

@@ -8,13 +8,13 @@ class ReleaseCoordinator(ConversableAgentBase):
     def __init__(self):
         super().__init__(
             name="ReleaseCoordinator",
-            system_prompt="Crafts release schedules, notes, and rollback templates from sprint data."
+            system_prompt="Craft release schedules, notes, rollback templates from sprint data.",
         )
 
     def draft_release(self, plan: Dict[str, Any]) -> Dict[str, Any]:
         start = datetime.now(UTC) + timedelta(days=3)
         window = f"{start.date()} -> {(start + timedelta(days=2)).date()}"
-        notes = [f"{t['id']}: {t['title']}" for t in plan['tasks']]
+        notes = [f"{t['id']}: {t['title']}" for t in plan["tasks"]]
         summary = {
             "generated_at": now_iso(),
             "window": window,
@@ -24,3 +24,5 @@ class ReleaseCoordinator(ConversableAgentBase):
         }
         self.send("Drafted release summary.")
         return summary
+
+__all__ = ["ReleaseCoordinator"]

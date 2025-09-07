@@ -1,8 +1,6 @@
-# Autogen Project Management Agent Team
+# PM Team (Stub + Optional Autogen)
 
-(README moved from `autogen_pm_team/README.md` — this is now the root project overview.)
-
-A dual-mode (stub + real Autogen) multi-agent example for project management workflows. It provides:
+Dual-mode (local heuristic + real Autogen) multi-agent example for project management workflows. Provides:
 
 - Deterministic lightweight Python-only agents (no API calls) for fast local iteration.
 - Optional real `autogen` LLM-powered agents (enable with `--autogen`).
@@ -29,37 +27,41 @@ A dual-mode (stub + real Autogen) multi-agent example for project management wor
 7. Audit logger appends JSONL entries; metrics updated (plans_created, blockers_recorded, last_points).
 8. (Optional) Real Autogen agents mirror the same flow; raw LLM outputs are shown.
 
-## Project Structure
+## Project Structure (src layout)
 
 ```
 .
   README.md
   pyproject.toml
-  autogen_pm_team/
-    requirements.txt
+  LICENSE
+  src/
     pm_team/
+      __init__.py
       base.py
       config.py
-      autogen_integration.py
       sprint_planner.py
       release_coordinator.py
       stakeholder_communicator.py
       orchestration.py
       output_writer.py
-    examples/
-      run_demo.py
-    tests/
-      test_orchestration.py
-    outputs/               # Generated artifacts (can be gitignored later)
+      autogen_integration.py   # Only used when --autogen and Autogen installed
+      cli.py                   # Entry point (console script: pm-team)
+  examples/
+    run_demo.py                # Thin wrapper to CLI
+  tests/
+    test_orchestration.py
+  outputs/                     # Generated artifacts (gitignored)
 ```
+
+Legacy directory `autogen_pm_team/` has been deprecated (left temporarily for migration reference). Source now lives under `src/pm_team`.
 
 ## Quick Start (Stub Mode)
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r autogen_pm_team/requirements.txt
-python autogen_pm_team/examples/run_demo.py "Build an AI-powered analytics dashboard"
+pip install -e .[dev]
+pm-team "Build an AI-powered analytics dashboard"
 ```
 
 ## Real Autogen Integration
@@ -67,8 +69,9 @@ python autogen_pm_team/examples/run_demo.py "Build an AI-powered analytics dashb
 ```bash
 export OPENAI_API_KEY="sk-..."
 export OPENAI_MODEL_NAME="gpt-4o-mini"   # optional
-python autogen_pm_team/examples/run_demo.py "New initiative" --autogen
+pm-team "New initiative" --autogen
 ```
+
 If no key is set, run proceeds in stub mode with a warning.
 
 ## Feature Highlights
@@ -84,7 +87,8 @@ If no key is set, run proceeds in stub mode with a warning.
 
 ## Configuration
 
-Edit `autogen_pm_team/pm_team/config.py` or set env vars:
+Edit `src/pm_team/config.py` or set env vars:
+
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL_NAME`
 - `PM_TEAM_OUTPUT_ROOT` (optional custom output directory)
@@ -100,7 +104,8 @@ Edit `autogen_pm_team/pm_team/config.py` or set env vars:
 
 ## Outputs
 
-Each run creates a timestamped folder under `autogen_pm_team/outputs/` containing:
+Each run creates a timestamped folder under `outputs/` containing:
+
 - `plan.json`
 - `release.json`
 - `metrics.json`
@@ -112,4 +117,8 @@ Each run creates a timestamped folder under `autogen_pm_team/outputs/` containin
 
 ## License
 
-MIT (add a LICENSE file if distributing externally).
+MIT (see `LICENSE`).
+
+---
+
+Migration Note: If you previously imported modules via `autogen_pm_team.pm_team.*`, update imports to `pm_team.*` after installing editable with `pip install -e .`.

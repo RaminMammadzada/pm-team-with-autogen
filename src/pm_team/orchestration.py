@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Dict, Any, Optional, List, Callable
 import json
-import os
 from datetime import datetime, UTC
 from .sprint_planner import SprintPlanner
 from .stakeholder_communicator import StakeholderCommunicator
@@ -9,11 +8,7 @@ from .release_coordinator import ReleaseCoordinator
 
 
 class EventBus:
-    """Very small synchronous event bus.
-
-    Subscribers register callbacks keyed by event name.
-    Each event payload is appended to an in-memory history for optional introspection.
-    """
+    """Very small synchronous event bus."""
 
     def __init__(self):
         self._subs: Dict[str, List[Callable[[Dict[str, Any]], None]]] = {}
@@ -42,8 +37,6 @@ class AuditLogger:
 
 
 class MetricsAccumulator:
-    """Collects simple numeric counters and derived metrics."""
-
     def __init__(self):
         self.counters: Dict[str, int] = {"plans_created": 0, "blockers_recorded": 0}
         self.last_points: int = 0
@@ -56,15 +49,6 @@ class MetricsAccumulator:
 
 
 class PMTeamOrchestrator:
-    """Coordinates the PM agent trio.
-
-    Future extension points:
-    - Domain knowledge injection per agent
-    - Escalation to human approver
-    - Audit trail persistence
-    - Metrics logging (cycle time, plan accuracy)
-    """
-
     def __init__(self, audit_path: str = "audit_log.jsonl"):
         self.sprint = SprintPlanner()
         self.release = ReleaseCoordinator()
@@ -72,7 +56,7 @@ class PMTeamOrchestrator:
         self.bus = EventBus()
         self.audit = AuditLogger(audit_path)
         self.metrics = MetricsAccumulator()
-        # Register basic audit mirroring
+        # Register audit mirroring
         self.bus.subscribe("PLAN_CREATED", lambda p: self.audit.log("PLAN_CREATED", {"task_count": len(p['tasks'])}))
         self.bus.subscribe("BLOCKER_ADDED", lambda p: self.audit.log("BLOCKER_ADDED", {"blocker": p['blocker']}))
         self.bus.subscribe("RELEASE_DRAFTED", lambda p: self.audit.log("RELEASE_DRAFTED", {"window": p['window']}))
@@ -81,7 +65,7 @@ class PMTeamOrchestrator:
     def run(self, initiative: str, blocker: Optional[str] = None, blockers: Optional[List[str]] = None) -> Dict[str, Any]:
         plan = self.sprint.plan(initiative)
         self.metrics.incr("plans_created")
-        total_points = sum(t["estimate_points"] for t in plan["tasks"])  # store for metrics
+        total_points = sum(t["estimate_points"] for t in plan["tasks"])
         self.metrics.last_points = total_points
         self.bus.emit("PLAN_CREATED", {"initiative": initiative, "tasks": plan["tasks"]})
         collected_blockers: List[str] = []
@@ -106,3 +90,5 @@ class PMTeamOrchestrator:
         }
         self.audit.log("RUN_COMPLETED", {"initiative": initiative, "points": total_points})
         return result
+
+__all__ = ["PMTeamOrchestrator", "EventBus", "AuditLogger", "MetricsAccumulator"]
