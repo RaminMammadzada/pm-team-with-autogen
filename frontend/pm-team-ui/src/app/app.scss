@@ -1,23 +1,125 @@
 /* Basic dashboard styling */
-:host, .app-shell { display: block; font-family: system-ui, Arial, sans-serif; }
-header { display:flex; justify-content: space-between; align-items:center; padding:.75rem 1rem; background:#222; color:#fff; }
-header h1 { font-size:1.25rem; margin:0; }
-header button { background:#444; color:#fff; border:1px solid #666; padding:.4rem .8rem; cursor:pointer; border-radius:4px; }
-header button:hover { background:#555; }
-.layout { display:flex; min-height: calc(100vh - 60px); }
-aside { width:220px; border-right:1px solid #ddd; padding:1rem; background:#fafafa; }
-aside h2 { font-size:1rem; margin-top:0; }
-aside ul { list-style:none; padding:0; margin:0; }
-aside li { margin-bottom:.25rem; }
-aside button { width:100%; text-align:left; border:0; background:transparent; padding:.35rem .4rem; border-radius:4px; cursor:pointer; }
-aside li.active button, aside button:hover { background:#e0e7ff; }
-main { flex:1; padding:1rem 1.25rem; overflow:auto; }
-main h2 { margin-top:0; font-size:1.05rem; }
-ul.runs { list-style:none; padding:0; display:flex; gap:.5rem; flex-wrap:wrap; }
-ul.runs li { margin:0; }
-ul.runs button { border:1px solid #ccc; background:#fff; padding:.3rem .6rem; border-radius:4px; cursor:pointer; font-size:.8rem; }
-ul.runs li.active button, ul.runs button:hover { background:#eef; }
-table.tasks { border-collapse:collapse; width:100%; margin-top:.75rem; font-size:.8rem; }
-table.tasks th, table.tasks td { border:1px solid #ddd; padding:.35rem .4rem; text-align:left; }
-table.tasks th { background:#f3f3f3; position:sticky; top:0; }
-@media (max-width: 800px){ .layout { flex-direction:column; } aside { width:100%; border-right:0; border-bottom:1px solid #ddd;} ul.runs { flex-direction:column; } }
+:host,
+.app-shell {
+  display: block;
+  font-family: system-ui, Arial, sans-serif;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #222;
+  color: #fff;
+}
+header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+header button {
+  background: #444;
+  color: #fff;
+  border: 1px solid #666;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+header button:hover {
+  background: #555;
+}
+.layout {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+aside {
+  width: 220px;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+  background: #fafafa;
+}
+aside h2 {
+  font-size: 1rem;
+  margin-top: 0;
+}
+aside ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+aside li {
+  margin-bottom: 0.25rem;
+}
+aside button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+aside li.active button,
+aside button:hover {
+  background: #e0e7ff;
+}
+main {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  overflow: auto;
+}
+main h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+ul.runs {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+ul.runs li {
+  margin: 0;
+}
+ul.runs button {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+ul.runs li.active button,
+ul.runs button:hover {
+  background: #eef;
+}
+table.tasks {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+table.tasks th,
+table.tasks td {
+  border: 1px solid #ddd;
+  padding: 0.35rem 0.4rem;
+  text-align: left;
+}
+table.tasks th {
+  background: #f3f3f3;
+  position: sticky;
+  top: 0;
+}
+@media (max-width: 800px) {
+  .layout {
+    flex-direction: column;
+  }
+  aside {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid #ddd;
+  }
+  ul.runs {
+    flex-direction: column;
+  }
+}

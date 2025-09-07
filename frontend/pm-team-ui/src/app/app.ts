@@ -3,16 +3,35 @@ import { RouterOutlet } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { NgFor, NgIf } from '@angular/common';
 
-interface ProjectMeta { slug: string; name: string; created_at?: string; description?: string; }
-interface RunMeta { run_id: string; created_at?: string; }
-interface PlanTask { id: string; title: string; type?: string; priority?: string; wsjf_score?: number; risk_exposure?: number; status?: string; }
-interface PlanArtifact { tasks?: PlanTask[]; [k: string]: any }
+interface ProjectMeta {
+  slug: string;
+  name: string;
+  created_at?: string;
+  description?: string;
+}
+interface RunMeta {
+  run_id: string;
+  created_at?: string;
+}
+interface PlanTask {
+  id: string;
+  title: string;
+  type?: string;
+  priority?: string;
+  wsjf_score?: number;
+  risk_exposure?: number;
+  status?: string;
+}
+interface PlanArtifact {
+  tasks?: PlanTask[];
+  [k: string]: any;
+}
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, HttpClientModule, NgFor, NgIf],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App {
   // Basic app signals
@@ -49,7 +68,7 @@ export class App {
         }
       },
       error: (err) => console.error('Failed to load projects', err),
-      complete: () => this.loadingProjects.set(false)
+      complete: () => this.loadingProjects.set(false),
     });
   }
 
@@ -67,13 +86,13 @@ export class App {
     this.http.get<any[]>(`${this.apiBase()}/projects/${proj.slug}/runs`).subscribe({
       next: (data) => {
         // Expect list of run manifests with run_id
-        this.runs.set(data.map(r => ({ run_id: r.run_id, created_at: r.created_at })));
+        this.runs.set(data.map((r) => ({ run_id: r.run_id, created_at: r.created_at })));
         if (!this.selectedRun() && data.length) {
           this.selectRun(this.runs()[0]);
         }
       },
       error: (err) => console.error('Failed to load runs', err),
-      complete: () => this.loadingRuns.set(false)
+      complete: () => this.loadingRuns.set(false),
     });
   }
 
@@ -88,10 +107,14 @@ export class App {
     const run = this.selectedRun();
     if (!proj || !run) return;
     this.loadingPlan.set(true);
-    this.http.get<PlanArtifact>(`${this.apiBase()}/projects/${proj.slug}/runs/${run.run_id}/artifact/plan.json`).subscribe({
-      next: (data) => this.plan.set(data),
-      error: (err) => console.error('Failed to load plan', err),
-      complete: () => this.loadingPlan.set(false)
-    });
+    this.http
+      .get<PlanArtifact>(
+        `${this.apiBase()}/projects/${proj.slug}/runs/${run.run_id}/artifact/plan.json`,
+      )
+      .subscribe({
+        next: (data) => this.plan.set(data),
+        error: (err) => console.error('Failed to load plan', err),
+        complete: () => this.loadingPlan.set(false),
+      });
   }
 }
