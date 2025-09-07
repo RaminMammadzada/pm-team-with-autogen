@@ -12,6 +12,7 @@ from .base import ConversableAgentBase, Message as AgentMessage
 import math
 import os
 from openai import OpenAI
+from .autogen_agent import autogen_generate
 
 CONVO_FILENAME = "conversation.json"
 
@@ -106,6 +107,10 @@ def _llm_available() -> bool:
     return bool(os.getenv("OPENAI_API_KEY"))
 
 
+def _use_autogen() -> bool:
+    return os.getenv("USE_AUTOGEN", "0") in ("1", "true", "True")
+
+
 def _llm_chat_completion(domain_summary: str, history: List[Dict[str, Any]], user_text: str) -> str:
     """Call OpenAI Chat Completion API with trimmed history.
 
@@ -146,7 +151,33 @@ def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, 
     domain_summary = _build_domain_summary(run_dir)
 
     reply_text: str
-    if _llm_available():
+    if _use_autogen() and _llm_available():
+        try:
+            reply_text = autogen_generate(domain_summary, history, user_text)
+        except Exception:
+            # Fall through to direct LLM attempt
+            if _llm_available():
+                try:
+                    reply_text = _llm_chat_completion(domain_summary, history, user_text)
+                except Exception:
+                    agent = ConversableAgentBase(
+                        name="planning_agent",
+                        system_prompt="Heuristic fallback planning assistant.",
+                        domain_knowledge=domain_summary,
+                    )
+                    for m in history:
+                        agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
+                    reply_text = agent.respond(user_text).content + "\n(Fallback used)"
+            else:
+                agent = ConversableAgentBase(
+                    name="planning_agent",
+                    system_prompt="Heuristic planning assistant (no OPENAI_API_KEY present).",
+                    domain_knowledge=domain_summary,
+                )
+                for m in history:
+                    agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
+                reply_text = agent.respond(user_text).content + "\n(Set OPENAI_API_KEY for LLM responses)"
+    elif _llm_available():
         try:
             reply_text = _llm_chat_completion(domain_summary, history, user_text)
         except Exception:
