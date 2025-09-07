@@ -10,6 +10,8 @@ import json
 from datetime import datetime, UTC
 from .base import ConversableAgentBase, Message as AgentMessage
 import math
+import os
+from openai import OpenAI
 
 CONVO_FILENAME = "conversation.json"
 
@@ -100,21 +102,74 @@ def _build_domain_summary(run_dir: Path) -> str:
     return "\n".join(l for l in summary_lines if l is not None)
 
 
+def _llm_available() -> bool:
+    return bool(os.getenv("OPENAI_API_KEY"))
+
+
+def _llm_chat_completion(domain_summary: str, history: List[Dict[str, Any]], user_text: str) -> str:
+    """Call OpenAI Chat Completion API with trimmed history.
+
+    Falls back by raising on any exception for outer handler to catch.
+    """
+    client = OpenAI()  # api key picked up from env
+    model = os.getenv("PM_TEAM_LLM_MODEL", "gpt-4o-mini")
+    # Trim last 12 messages (user+agent) for context
+    recent = history[-12:]
+    msgs = []
+    system_instructions = (
+        "You are an expert agile planning assistant. Provide concise, actionable responses. "
+        "Ground every answer in the provided plan context. If user asks for status, summarize tasks, risk, blockers. "
+        "If user asks vague question like 'what is happening', produce a project status snapshot (tasks count, high risk tasks, blockers, estimate sprints). "
+        "If risk mitigation or reprioritization is requested, outline concrete steps referencing task IDs. "
+        "Never hallucinate tasks that aren't in context. If unsure, ask for clarification briefly."
+    )
+    msgs.append({"role": "system", "content": system_instructions + "\n\nPLAN_CONTEXT:\n" + domain_summary})
+    for m in recent:
+        role = "assistant" if m["sender"] == "agent" else "user"
+        msgs.append({"role": role, "content": m["content"]})
+    msgs.append({"role": "user", "content": user_text})
+    try:
+        resp = client.chat.completions.create(model=model, messages=msgs, temperature=0.3, max_tokens=400)
+        content = resp.choices[0].message.content or "(no content returned)"
+        return content.strip()
+    except Exception as e:
+        raise RuntimeError(f"LLM call failed: {e}")
+
+
 def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
-    """Append a user message and generate an agent reply with artifact context."""
+    """Append a user message and generate an agent reply.
+
+    Prefers real LLM (OpenAI) if OPENAI_API_KEY set; otherwise heuristic fallback.
+    """
     user_message = {"sender": "user", "content": user_text, "timestamp": _now_iso()}
     history = append_messages(run_dir, [user_message])
-
     domain_summary = _build_domain_summary(run_dir)
-    agent = ConversableAgentBase(
-        name="planning_agent",
-        system_prompt="You are a planning assistant that provides concise, actionable responses grounded in the current initiative plan.",
-        domain_knowledge=domain_summary,
-    )
-    for m in history:
-        agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
-    reply_agent_msg = agent.respond(user_text)
-    reply_message = {"sender": "agent", "content": reply_agent_msg.content, "timestamp": _now_iso()}
+
+    reply_text: str
+    if _llm_available():
+        try:
+            reply_text = _llm_chat_completion(domain_summary, history, user_text)
+        except Exception:
+            # Silent fallback (could log) to heuristic agent
+            agent = ConversableAgentBase(
+                name="planning_agent",
+                system_prompt="Heuristic fallback planning assistant.",
+                domain_knowledge=domain_summary,
+            )
+            for m in history:
+                agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
+            reply_text = agent.respond(user_text).content + "\n(Fallback used)"
+    else:
+        agent = ConversableAgentBase(
+            name="planning_agent",
+            system_prompt="Heuristic planning assistant (no OPENAI_API_KEY present).",
+            domain_knowledge=domain_summary,
+        )
+        for m in history:
+            agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
+        reply_text = agent.respond(user_text).content + "\n(Set OPENAI_API_KEY for LLM responses)"
+
+    reply_message = {"sender": "agent", "content": reply_text, "timestamp": _now_iso()}
     history = append_messages(run_dir, [reply_message])
     return reply_message, history
 
