@@ -111,6 +111,42 @@ def _use_autogen() -> bool:
     return os.getenv("USE_AUTOGEN", "0") in ("1", "true", "True")
 
 
+def _force_llm() -> bool:
+    """If set, disable heuristic fallback and require a real LLM key.
+
+    FORCE_LLM=1 will cause queries to return a configuration error instead of
+    heuristic content when OPENAI_API_KEY is missing.
+    """
+    return os.getenv("FORCE_LLM", "0") in ("1", "true", "True")
+
+
+def _build_structured_context(run_dir: Path) -> Dict[str, Any]:
+    """Provide a machine-consumable slice of artifacts (limited for tokens)."""
+    plan = _load_artifact_json(run_dir, "plan.json") or {}
+    tasks = plan.get("tasks", [])
+    # Limit tasks to first 30 by priority/id to avoid token explosion
+    tasks_sorted = sorted(tasks, key=lambda t: (t.get("priority", 9999), t.get("id", "")))[:30]
+    reduced_tasks = [
+        {
+            "id": t.get("id"),
+            "title": t.get("title"),
+            "status": t.get("status"),
+            "risk": t.get("risk"),
+            "risk_score": t.get("risk_score"),
+            "estimate_points": t.get("estimate_points"),
+            "priority": t.get("priority"),
+        }
+        for t in tasks_sorted
+    ]
+    return {
+        "initiative": plan.get("initiative"),
+        "aggregate_risk_score": plan.get("aggregate_risk_score"),
+        "velocity_assumption": plan.get("velocity_assumption"),
+        "blockers": plan.get("blockers", []),
+        "tasks": reduced_tasks,
+    }
+
+
 def _llm_chat_completion(domain_summary: str, history: List[Dict[str, Any]], user_text: str) -> str:
     """Call OpenAI Chat Completion API with trimmed history.
 
@@ -121,14 +157,23 @@ def _llm_chat_completion(domain_summary: str, history: List[Dict[str, Any]], use
     # Trim last 12 messages (user+agent) for context
     recent = history[-12:]
     msgs = []
+    # Build structured context JSON for richer grounding (lightweight slice)
+    # We embed as fenced JSON so model can parse reliably.
+    from json import dumps as _dumps
+    structured = _build_structured_context(Path(history[0].get("run_dir", ".")) if history else Path("."))
     system_instructions = (
-        "You are an expert agile planning assistant. Provide concise, actionable responses. "
-        "Ground every answer in the provided plan context. If user asks for status, summarize tasks, risk, blockers. "
-        "If user asks vague question like 'what is happening', produce a project status snapshot (tasks count, high risk tasks, blockers, estimate sprints). "
-        "If risk mitigation or reprioritization is requested, outline concrete steps referencing task IDs. "
-        "Never hallucinate tasks that aren't in context. If unsure, ask for clarification briefly."
+        "You are an expert agile planning assistant. Provide concise, actionable responses grounded ONLY in the supplied artifacts. "
+        "If the user asks: status/progress -> produce a brief snapshot (task count, points, high risk count, blockers, est sprints). "
+        "If mitigation or reprioritization is requested -> list concrete steps referencing task IDs. "
+        "NEVER invent tasks or blockers not present. If insufficient info, ask a clarifying question. "
+        "Prefer bullet lists for multi-step guidance; otherwise a short paragraph."
     )
-    msgs.append({"role": "system", "content": system_instructions + "\n\nPLAN_CONTEXT:\n" + domain_summary})
+    combined_context = (
+        system_instructions
+        + "\n\nTEXT_SUMMARY:\n" + domain_summary
+        + "\n\nSTRUCTURED_CONTEXT (JSON):\n```json\n" + _dumps(structured, ensure_ascii=False) + "\n```"
+    )
+    msgs.append({"role": "system", "content": combined_context})
     for m in recent:
         role = "assistant" if m["sender"] == "agent" else "user"
         msgs.append({"role": role, "content": m["content"]})
@@ -152,6 +197,19 @@ def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, 
 
     reply_text: str
     is_status_query = any(k in user_text.lower() for k in ["what is happening", "status", "summary", "progress", "update"])
+
+    if _force_llm() and not _llm_available():
+        # Explicit configuration error path
+        reply_message = {
+            "sender": "agent",
+            "content": (
+                "Configuration error: FORCE_LLM is enabled but OPENAI_API_KEY is not set. "
+                "Please provide an API key to get LLM-backed answers."
+            ),
+            "timestamp": _now_iso(),
+        }
+        history = append_messages(run_dir, [reply_message])
+        return reply_message, history
 
     if _use_autogen() and _llm_available():
         try:
