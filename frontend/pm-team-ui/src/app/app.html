@@ -124,6 +124,26 @@
         </table>
         <div *ngIf="!loadingPlan() && !planTasks().length">No tasks produced.</div>
       </section>
+      <section *ngIf="selectedRun() as run" class="chat-panel">
+        <h3>Conversation</h3>
+        <div class="chat-messages" *ngIf="!chatLoading(); else loadingChatTmpl">
+          <div *ngIf="!chatMessages().length" class="empty">No messages yet. Ask something about this initiative.</div>
+          <div *ngFor="let m of chatMessages()" [class]="roleClass(m)">
+            <div class="bubble">
+              <span class="sender">{{ m.sender }}</span>
+              <div class="content">{{ m.content }}</div>
+              <time>{{ m.timestamp | date:'shortTime' }}</time>
+            </div>
+          </div>
+        </div>
+        <ng-template #loadingChatTmpl>
+          <div class="empty">Loading conversation…</div>
+        </ng-template>
+        <form class="chat-input" (submit)="sendChat($event)">
+          <input type="text" placeholder="Ask a question or request a refinement" [disabled]="chatSending()" [value]="chatInput()" (input)="chatInput.set(($any($event.target)).value)" />
+          <button type="submit" [disabled]="chatSending() || !chatInput().trim()">{{ chatSending() ? 'Sending…' : 'Send' }}</button>
+        </form>
+      </section>
     </main>
   </section>
 </div>

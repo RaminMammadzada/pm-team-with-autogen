@@ -1,12 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf, DatePipe } from '@angular/common';
 import { ToastContainerComponent } from './components/toast-container.component';
-import { DataService, ProjectMeta, RunMeta, PlanArtifact } from './services/data.service';
+import { DataService, ProjectMeta, RunMeta, PlanArtifact, ChatMessage } from './services/data.service';
 import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
-  imports: [NgFor, NgIf, ToastContainerComponent],
+  imports: [NgFor, NgIf, DatePipe, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -43,6 +43,12 @@ export class App {
     const highPrio = priorities.filter((p) => /high/i.test(p)).length;
     return { total, avgRisk, types: types.size, highPrio };
   });
+
+  // Chat state
+  protected readonly chatMessages = signal<ChatMessage[]>([]);
+  protected readonly chatLoading = signal(false);
+  protected readonly chatSending = signal(false);
+  protected readonly chatInput = signal('');
 
   // Project creation UX state
   protected readonly creatingProject = signal(false);
@@ -181,7 +187,9 @@ export class App {
   protected selectRun(r: RunMeta) {
     this.selectedRun.set(r);
     this.plan.set(null);
+  this.chatMessages.set([]);
     this.fetchPlan();
+  this.loadChat();
   }
 
   protected fetchPlan() {
@@ -216,5 +224,47 @@ export class App {
       },
       error: () => this.notify.error('Cannot create run'),
     });
+  }
+
+  protected loadChat() {
+    const proj = this.selectedProject();
+    const run = this.selectedRun();
+    if (!proj || !run) return;
+    this.chatLoading.set(true);
+    this.data.getChat(proj.slug, run.run_id).subscribe({
+      next: (resp) => this.chatMessages.set(resp.messages || []),
+      error: () => this.notify.error('Cannot load chat'),
+      complete: () => this.chatLoading.set(false),
+    });
+  }
+
+  protected sendChat(ev: Event) {
+    ev.preventDefault();
+    if (this.chatSending()) return;
+    const text = this.chatInput().trim();
+    if (!text) return;
+    const proj = this.selectedProject();
+    const run = this.selectedRun();
+    if (!proj || !run) return;
+    // Optimistic append user message
+    const optimistic: ChatMessage = { sender: 'user', content: text, timestamp: new Date().toISOString() };
+    this.chatMessages.set([...this.chatMessages(), optimistic]);
+    this.chatSending.set(true);
+    this.chatInput.set('');
+    this.data.sendChat(proj.slug, run.run_id, text).subscribe({
+      next: (resp) => {
+        if (resp.messages) this.chatMessages.set(resp.messages);
+      },
+      error: () => {
+        this.notify.error('Chat send failed');
+        // Roll back optimistic on failure
+        this.chatMessages.set(this.chatMessages().filter(m => m !== optimistic));
+      },
+      complete: () => this.chatSending.set(false),
+    });
+  }
+
+  protected roleClass(m: ChatMessage): string {
+    return m.sender === 'user' ? 'msg user' : 'msg agent';
   }
 }

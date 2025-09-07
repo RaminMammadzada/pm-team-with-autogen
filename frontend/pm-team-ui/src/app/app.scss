@@ -307,6 +307,69 @@ table.tasks th {
   position: sticky;
   top: 0;
 }
+.chat-panel {
+  margin-top: 2rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+}
+.chat-messages {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.25rem 0 0.5rem;
+}
+.chat-messages .msg .bubble {
+  position: relative;
+  background: #f0f4ff;
+  border: 1px solid #c8d8ff;
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem 0.6rem;
+  font-size: 0.7rem;
+  max-width: 640px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+}
+.chat-messages .msg.agent .bubble { background:#f8f9fb; border-color:#d5dbe3; }
+.chat-messages .msg.user .bubble { background:#e6f3ff; border-color:#b5d8ff; }
+.chat-messages .sender {
+  display: inline-block;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  color:#39507a;
+  margin-bottom: 0.15rem;
+}
+.chat-messages time {
+  display: block;
+  font-size: 0.5rem;
+  color: #777;
+  margin-top: 0.35rem;
+}
+.chat-input {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.chat-input input {
+  flex: 1;
+  font: inherit;
+  border: 1px solid #ccc;
+  padding: 0.45rem 0.55rem;
+  border-radius: 4px;
+}
+.chat-input button {
+  background: #3758d5;
+  border: 1px solid #2f4bb5;
+  color: #fff;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.chat-input button[disabled] { opacity:0.6; cursor:not-allowed; }
 @media (max-width: 800px) {
   .layout {
     flex-direction: column;

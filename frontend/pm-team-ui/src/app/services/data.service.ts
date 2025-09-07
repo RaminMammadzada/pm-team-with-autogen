@@ -27,6 +27,17 @@ export interface PlanArtifact {
   [k: string]: any;
 }
 
+export interface ChatMessage {
+  sender: string;
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatResponse {
+  messages: ChatMessage[];
+  reply?: ChatMessage;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataService {
   private http = inject(HttpClient);
@@ -64,6 +75,17 @@ export class DataService {
     return this.http.post<{ run_id: string; initiative: string }>(
       `${this.env.apiBase}/projects/${slug}/runs`,
       body,
+    );
+  }
+
+  getChat(slug: string, runId: string): Observable<ChatResponse> {
+    return this.http.get<ChatResponse>(`${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`);
+  }
+
+  sendChat(slug: string, runId: string, message: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(
+      `${this.env.apiBase}/projects/${slug}/runs/${runId}/chat`,
+      { message },
     );
   }
 }
