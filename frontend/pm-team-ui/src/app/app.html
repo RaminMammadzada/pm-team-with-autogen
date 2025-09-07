@@ -61,21 +61,32 @@
     </aside>
     <main>
       <section *ngIf="selectedProject() as proj">
-        <h2>Runs – {{ proj.slug }}</h2>
-        <div *ngIf="loadingRuns()">Loading runs…</div>
+        <h2>Initiatives – {{ proj.slug }}</h2>
+        <div *ngIf="loadingRuns()">Loading initiatives…</div>
         <ul class="runs">
           <li *ngFor="let r of runs()" [class.active]="r.run_id === selectedRun()?.run_id">
-            <button (click)="selectRun(r)">{{ r.run_id }}</button>
+            <button (click)="selectRun(r)">{{ runLabel(r) }}</button>
           </li>
         </ul>
         <form class="create-run" (submit)="createRun($event)" *ngIf="!loadingRuns()" novalidate>
-          <input name="initiative" placeholder="New initiative description" />
-          <button type="submit">Generate Run</button>
+          <input name="initiative" placeholder="Describe a new initiative focus" />
+          <button type="submit">Generate Initiative</button>
         </form>
+        <div *ngIf="!loadingRuns() && !runs().length" class="empty">No initiatives yet. Generate the first one.</div>
       </section>
 
       <section *ngIf="selectedRun() as run">
-        <h2>Plan ({{ run.run_id }})</h2>
+        <h2>Initiative Plan</h2>
+        <div class="plan-summary" *ngIf="planSummary() as s">
+          <div><strong>Tasks:</strong> {{ s.total }}</div>
+          <div><strong>Avg Risk:</strong> {{ fmt(s.avgRisk) }}</div>
+          <div><strong>Types:</strong> {{ s.types }}</div>
+          <div><strong>High Priority:</strong> {{ s.highPrio }}</div>
+          <div class="links" *ngIf="selectedProject() as p">
+            <a target="_blank" [href]="'/api/projects/' + p.slug + '/runs/' + run.run_id + '/artifact/plan.json'">plan.json</a>
+            <a target="_blank" [href]="'/api/projects/' + p.slug + '/runs/' + run.run_id + '/artifact/metrics.json'">metrics.json</a>
+          </div>
+        </div>
         <div *ngIf="loadingPlan()">Loading plan…</div>
         <table *ngIf="!loadingPlan() && planTasks().length" class="tasks">
           <thead>
@@ -94,14 +105,14 @@
               <td>{{ t.id }}</td>
               <td>{{ t.title }}</td>
               <td>{{ t.type }}</td>
-              <td>{{ t.priority }}</td>
-              <td>{{ t.wsjf_score }}</td>
-              <td>{{ t.risk_exposure }}</td>
-              <td>{{ t.status }}</td>
+              <td>{{ t.priority || '–' }}</td>
+              <td>{{ fmt(t.wsjf_score) }}</td>
+              <td>{{ fmt(t.risk_exposure) }}</td>
+              <td>{{ t.status || '–' }}</td>
             </tr>
           </tbody>
         </table>
-        <div *ngIf="!loadingPlan() && !planTasks().length">No tasks in plan.</div>
+        <div *ngIf="!loadingPlan() && !planTasks().length">No tasks produced.</div>
       </section>
     </main>
   </section>

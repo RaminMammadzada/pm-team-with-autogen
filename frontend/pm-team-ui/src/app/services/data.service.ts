@@ -57,7 +57,13 @@ export class DataService {
     );
   }
 
-  createRun(slug: string, body: { initiative: string; blocker?: string; blockers?: string[]; max_runs?: number; }): Observable<{ run_id: string; initiative: string; }> {
-    return this.http.post<{ run_id: string; initiative: string; }>(`${this.env.apiBase}/projects/${slug}/runs`, body);
+  createRun(
+    slug: string,
+    body: { initiative: string; blocker?: string; blockers?: string[]; max_runs?: number },
+  ): Observable<{ run_id: string; initiative: string }> {
+    return this.http.post<{ run_id: string; initiative: string }>(
+      `${this.env.apiBase}/projects/${slug}/runs`,
+      body,
+    );
   }
 }

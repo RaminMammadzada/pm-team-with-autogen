@@ -28,6 +28,17 @@ export class App {
   protected readonly loadingPlan = signal(false);
   protected readonly plan = signal<PlanArtifact | null>(null);
   protected readonly planTasks = computed(() => this.plan()?.tasks || []);
+  protected readonly planSummary = computed(() => {
+    const tasks = this.planTasks();
+    if (!tasks.length) return null;
+    const total = tasks.length;
+    const risks = tasks.map(t => (t as any).risk_exposure).filter((v: any) => typeof v === 'number');
+    const avgRisk = risks.length ? risks.reduce((a: number,b: number)=>a+b,0)/risks.length : null;
+    const types = new Set(tasks.map(t => (t as any).type).filter(Boolean));
+    const priorities = tasks.map(t => (t as any).priority).filter(Boolean);
+    const highPrio = priorities.filter(p => /high/i.test(p)).length;
+    return { total, avgRisk, types: types.size, highPrio };
+  });
 
   // Project creation UX state
   protected readonly creatingProject = signal(false);
@@ -149,6 +160,20 @@ export class App {
     });
   }
 
+  protected runLabel(r: RunMeta): string {
+    const raw = r.run_id;
+    const idx = raw.indexOf('_');
+    if (idx === -1) return raw;
+    const rest = raw.substring(idx + 1).replace(/_/g, ' ');
+    return rest.length > 50 ? rest.slice(0,47) + '…' : rest;
+  }
+
+  protected fmt(n: any): string {
+    if (n == null || n === '') return '–';
+    if (typeof n === 'number') return Number.isInteger(n) ? n.toString() : n.toFixed(2);
+    return n;
+  }
+
   protected selectRun(r: RunMeta) {
     this.selectedRun.set(r);
     this.plan.set(null);
@@ -181,7 +206,7 @@ export class App {
         form.reset();
         this.fetchRuns();
         setTimeout(() => {
-          const found = this.runs().find(x => x.run_id === r.run_id);
+          const found = this.runs().find((x) => x.run_id === r.run_id);
           if (found) this.selectRun(found);
         }, 400);
       },
