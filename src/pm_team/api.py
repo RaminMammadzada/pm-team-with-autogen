@@ -14,6 +14,8 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from pathlib import Path
 import json
 from .projects import list_projects, project_dir, create_project
+from .output_writer import persist_run
+from .orchestration import PMTeamOrchestrator
 
 app = FastAPI(title="PM Team API", version="0.1.0")
 
@@ -68,6 +70,27 @@ def post_project(payload: ProjectCreate):
     except ValueError as e:
         raise HTTPException(400, str(e))
     return meta
+
+
+class RunCreate(BaseModel):
+    initiative: str = Field(..., description="Initiative description to generate a plan for")
+    blocker: str | None = Field(None, description="Optional single blocker")
+    blockers: list[str] | None = Field(None, description="Optional list of blockers if more than one")
+    max_runs: int | None = Field(None, description="Optional retention for run directories")
+
+
+@app.post("/projects/{slug}/runs", status_code=201)
+def create_run(slug: str, payload: RunCreate):
+    # Ensure project exists
+    from .projects import ensure_project
+    ensure_project(slug)
+    orchestrator = PMTeamOrchestrator(audit_path=str(project_dir(slug) / "audit_log.jsonl"))
+    single_blocker = payload.blocker if payload.blocker and not payload.blockers else None
+    multi_blockers = payload.blockers if payload.blockers else ( [payload.blocker] if (payload.blocker and not payload.blockers) else None )
+    result = orchestrator.run(payload.initiative, blocker=single_blocker, blockers=multi_blockers)
+    run_dir = persist_run(result, None, payload.initiative, project=slug, max_runs=payload.max_runs)
+    run_id = run_dir.name
+    return {"run_id": run_id, "initiative": payload.initiative}
 
 
 @app.get("/projects/{slug}/runs")

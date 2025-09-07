@@ -32,19 +32,20 @@ export class App {
   // Project creation UX state
   protected readonly creatingProject = signal(false);
   protected readonly newProjectName = signal('');
-  protected readonly newProjectSlug = computed(() =>
-    this.newProjectName()
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_\- ]+/g, '')
-      .replace(/\s+/g, '_') || ''
+  protected readonly newProjectSlug = computed(
+    () =>
+      this.newProjectName()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_\- ]+/g, '')
+        .replace(/\s+/g, '_') || '',
   );
   protected readonly tagInput = signal('');
   protected readonly tagChips = computed(() =>
     this.tagInput()
       .split(',')
       .map((t) => t.trim())
-      .filter((t, i, arr) => t && arr.indexOf(t) === i)
+      .filter((t, i, arr) => t && arr.indexOf(t) === i),
   );
 
   constructor() {
@@ -163,6 +164,28 @@ export class App {
       next: (data) => this.plan.set(data),
       error: () => this.notify.error('Cannot load plan'),
       complete: () => this.loadingPlan.set(false),
+    });
+  }
+
+  protected createRun(ev: Event) {
+    ev.preventDefault();
+    const proj = this.selectedProject();
+    if (!proj) return;
+    const form = ev.target as HTMLFormElement;
+    const fd = new FormData(form);
+    const initiative = (fd.get('initiative') || '').toString().trim() || 'New initiative';
+    this.notify.info('Generating run…');
+    this.data.createRun(proj.slug, { initiative }).subscribe({
+      next: (r) => {
+        this.notify.info('Run created');
+        form.reset();
+        this.fetchRuns();
+        setTimeout(() => {
+          const found = this.runs().find(x => x.run_id === r.run_id);
+          if (found) this.selectRun(found);
+        }, 400);
+      },
+      error: () => this.notify.error('Cannot create run'),
     });
   }
 }

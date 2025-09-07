@@ -12,31 +12,41 @@
           <label>
             Name
             <input name="name" required (input)="onNameInput($any($event.target).value)" />
-            <small class="hint" *ngIf="newProjectSlug()">Slug: <code>{{ newProjectSlug() }}</code></small>
+            <small class="hint" *ngIf="newProjectSlug()"
+              >Slug: <code>{{ newProjectSlug() }}</code></small
+            >
           </label>
           <label class="wide">
             Description
-            <textarea name="description" rows="2" placeholder="Short summary / objective"></textarea>
+            <textarea
+              name="description"
+              rows="2"
+              placeholder="Short summary / objective"
+            ></textarea>
           </label>
           <label>
             Domain
             <input name="domain" placeholder="e.g. claims, billing" />
           </label>
-            <label>
-              Owner
-              <input name="owner" placeholder="team or person" />
-            </label>
-            <label>
-              Priority
-              <input name="priority" placeholder="High / Medium / Low" />
-            </label>
-            <label class="wide">
-              Tags (comma separated)
-              <input name="tags" placeholder="tag1, tag2" (input)="onTagsInput($any($event.target).value)" />
-              <div class="chips" *ngIf="tagChips().length">
-                <span class="chip" *ngFor="let t of tagChips()">{{ t }}</span>
-              </div>
-            </label>
+          <label>
+            Owner
+            <input name="owner" placeholder="team or person" />
+          </label>
+          <label>
+            Priority
+            <input name="priority" placeholder="High / Medium / Low" />
+          </label>
+          <label class="wide">
+            Tags (comma separated)
+            <input
+              name="tags"
+              placeholder="tag1, tag2"
+              (input)="onTagsInput($any($event.target).value)"
+            />
+            <div class="chips" *ngIf="tagChips().length">
+              <span class="chip" *ngFor="let t of tagChips()">{{ t }}</span>
+            </div>
+          </label>
           <button type="submit" [disabled]="creatingProject() || !newProjectSlug()">
             {{ creatingProject() ? 'Creating…' : 'Create' }}
           </button>
@@ -58,6 +68,10 @@
             <button (click)="selectRun(r)">{{ r.run_id }}</button>
           </li>
         </ul>
+        <form class="create-run" (submit)="createRun($event)" *ngIf="!loadingRuns()" novalidate>
+          <input name="initiative" placeholder="New initiative description" />
+          <button type="submit">Generate Run</button>
+        </form>
       </section>
 
       <section *ngIf="selectedRun() as run">
