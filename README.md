@@ -69,7 +69,10 @@ pm-team "Build an AI-powered analytics dashboard"
 
 ```bash
 export OPENAI_API_KEY="sk-..."
-export OPENAI_MODEL_NAME="gpt-4o-mini"   # optional
+# Model env var (either works – first has precedence if both set)
+export PM_TEAM_LLM_MODEL="gpt-4o-mini"   # preferred
+# or legacy name still supported:
+export OPENAI_MODEL_NAME="gpt-4o-mini"
 pm-team "New initiative" --autogen
 ```
 
@@ -145,7 +148,8 @@ PM_TEAM_NONINTERACTIVE=1 pm-team "Nightly regression hardening"
 | Variable                 | Effect                                                    |
 | ------------------------ | --------------------------------------------------------- |
 | `OPENAI_API_KEY`         | Enables real Autogen LLM mode                             |
-| `OPENAI_MODEL_NAME`      | Override default model (gpt-4o-mini)                      |
+| `PM_TEAM_LLM_MODEL`      | Override default model (preferred name)                   |
+| `OPENAI_MODEL_NAME`      | Legacy model override (still supported)                   |
 | `PM_TEAM_OUTPUT_ROOT`    | Change base outputs directory                             |
 | `PM_TEAM_NONINTERACTIVE` | If `1`, skip interactive project selection; use `default` |
 

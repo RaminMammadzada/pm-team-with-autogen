@@ -117,7 +117,7 @@ def _llm_chat_completion(domain_summary: str, history: List[Dict[str, Any]], use
     Falls back by raising on any exception for outer handler to catch.
     """
     client = OpenAI()  # api key picked up from env
-    model = os.getenv("PM_TEAM_LLM_MODEL", "gpt-4o-mini")
+    model = os.getenv("PM_TEAM_LLM_MODEL") or os.getenv("OPENAI_MODEL_NAME") or "gpt-4o-mini"
     # Trim last 12 messages (user+agent) for context
     recent = history[-12:]
     msgs = []

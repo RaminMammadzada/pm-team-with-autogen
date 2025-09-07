@@ -12,7 +12,8 @@ _DEFAULT_MODEL = "gpt-4o-mini"
 
 
 def _get_llm_config():
-    model = os.getenv("PM_TEAM_LLM_MODEL", _DEFAULT_MODEL)
+    # Precedence: explicit PM_TEAM_LLM_MODEL, then legacy/README OPENAI_MODEL_NAME, else default
+    model = os.getenv("PM_TEAM_LLM_MODEL") or os.getenv("OPENAI_MODEL_NAME") or _DEFAULT_MODEL
     # Autogen expects a config_list under llm_config
     return {
         "config_list": [
