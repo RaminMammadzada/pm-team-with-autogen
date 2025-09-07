@@ -15,6 +15,7 @@ from pathlib import Path
 import json
 from .projects import list_projects, project_dir, create_project
 from .output_writer import persist_run
+from .conversation import load_conversation, agent_reply
 from .orchestration import PMTeamOrchestrator
 
 app = FastAPI(title="PM Team API", version="0.1.0")
@@ -154,6 +155,31 @@ def get_artifact(slug: str, run_id: str, name: str):
         except Exception:
             return JSONResponse({"error": "invalid json"}, status_code=500)
     return PlainTextResponse(d.read_text())
+
+
+@app.get("/projects/{slug}/runs/{run_id}/chat")
+def get_chat(slug: str, run_id: str):
+    d = project_dir(slug) / run_id
+    if not d.exists():
+        raise HTTPException(404, "Run not found")
+    messages = load_conversation(d)
+    return {"messages": messages}
+
+
+class ChatPost(BaseModel):
+    message: str = Field(..., description="User prompt / query")
+
+
+@app.post("/projects/{slug}/runs/{run_id}/chat")
+def post_chat(slug: str, run_id: str, payload: ChatPost):
+    content = (payload.message or "").strip()
+    if not content:
+        raise HTTPException(400, "Empty message")
+    d = project_dir(slug) / run_id
+    if not d.exists():
+        raise HTTPException(404, "Run not found")
+    reply, history = agent_reply(d, slug, content)
+    return {"reply": reply, "messages": history}
 
 
 # Simple health
