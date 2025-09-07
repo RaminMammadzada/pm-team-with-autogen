@@ -49,34 +49,58 @@ class ConversableAgentBase:
         summary_tail = self.summarize_context(last_n=4)
         dk = self.domain_knowledge or ""
 
-        def _section(name: str, text: str) -> str:
-            return f"{name}: {text}" if text else ""
+        is_status_query = any(k in lower for k in ["what is happening", "status", "summary", "progress", "update"])
 
-        # Simple intent detection
-        if any(k in lower for k in ["what is happening", "status", "summary", "progress", "update"]):
-            # Extract pre-computed summary lines from domain knowledge tokens
-            lines = []
-            for marker in ["INITIATIVE:", "TASK_COUNT:", "HIGH_RISK_TASKS:", "BLOCKERS:", "TOTAL_POINTS:", "AGG_RISK:"]:
-                for ln in dk.splitlines():
-                    if ln.startswith(marker):
-                        lines.append(ln)
+        if is_status_query:
+            markers: dict[str, str] = {}
+            for ln in dk.splitlines():
+                if ":" in ln:
+                    key, val = ln.split(":", 1)
+                    key = key.strip(); val = val.strip()
+                    if key in {"INITIATIVE", "TASK_COUNT", "HIGH_RISK_TASKS", "BLOCKERS", "TOTAL_POINTS", "AGG_RISK", "EST_SPRINTS", "RELEASE_ITEMS"}:
+                        markers[key] = val
+            top_tasks: list[str] = []
+            in_tasks = False
+            for ln in dk.splitlines():
+                if ln.startswith("TOP_TASKS:"):
+                    in_tasks = True
+                    continue
+                if in_tasks:
+                    if not ln.startswith("  - "):
                         break
-            content = "Project status -> " + "; ".join(lines)
+                    clean = ln.strip()[3:]
+                    top_tasks.append(clean.split(" (", 1)[0])
+                    if len(top_tasks) >= 3:
+                        break
+            initiative = markers.get("INITIATIVE", "(unknown initiative)")
+            blockers_val = markers.get("BLOCKERS", "None")
+            blockers_phrase = "No active blockers" if blockers_val.lower() == "none" else f"Blockers: {blockers_val}"
+            parts = [
+                f"Status: {initiative}",
+                f"Tasks: {markers.get('TASK_COUNT', '?')} ({markers.get('TOTAL_POINTS', '?')} pts)",
+                f"High risk: {markers.get('HIGH_RISK_TASKS', '0')}",
+                blockers_phrase,
+                f"Aggregate risk score: {markers.get('AGG_RISK', '?')}"
+            ]
+            if 'EST_SPRINTS' in markers:
+                parts.append(f"Est. sprints: {markers['EST_SPRINTS']}")
+            if top_tasks:
+                parts.append("Top tasks: " + ", ".join(top_tasks))
+            content = ". ".join(parts) + "."
         elif "risk" in lower:
-            risks = []
+            risks: list[str] = []
             for ln in dk.splitlines():
                 if ln.startswith("HIGH_RISK_TASKS:") or ln.startswith("AGG_RISK:"):
                     risks.append(ln)
             content = "Risk overview: " + ("; ".join(risks) or "No significant risks identified")
         elif "blocker" in lower or "blocked" in lower:
-            bl = []
+            blockers_list: list[str] = []
             for ln in dk.splitlines():
                 if ln.startswith("BLOCKERS:"):
-                    bl.append(ln)
-            content = bl[0] if bl else "No blockers recorded in the current plan."
+                    blockers_list.append(ln)
+            content = blockers_list[0] if blockers_list else "No blockers recorded in the current plan."
         elif "tasks" in lower or "plan" in lower:
-            # Provide top tasks with priority
-            tasks_section = []
+            tasks_section: list[str] = []
             in_tasks = False
             for ln in dk.splitlines():
                 if ln.startswith("TOP_TASKS:"):
@@ -90,8 +114,7 @@ class ConversableAgentBase:
         else:
             content = f"Answer (heuristic): I considered recent context and artifacts. Your request: {prompt[:160]}"
 
-        # Add brief provenance tail
-        if summary_tail:
+        if summary_tail and not is_status_query:
             content += f"\nContext: {summary_tail[:240]}"
         return self.send(content)
 
