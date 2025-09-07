@@ -96,6 +96,52 @@ Edit `src/pm_team/config.py` or set env vars:
 - `PM_TEAM_OUTPUT_ROOT` (optional custom output directory)
 - `PM_TEAM_NONINTERACTIVE=1` (skip interactive project prompt; uses `default`)
 
+## Multi-Project Usage
+
+Create a named project (auto-creates directory & metadata):
+
+```bash
+pm-team --create-project FinanceRevamp "Initial architecture baseline"
+```
+
+Run another initiative in the same project:
+
+```bash
+pm-team --project FinanceRevamp "Add billing integration" --blocker compliance --blocker networking
+```
+
+List projects (simple file system inspection):
+
+```bash
+ls outputs
+cat outputs/finance_revamp/project.json
+```
+
+Non-interactive default project (CI / scripts):
+
+```bash
+PM_TEAM_NONINTERACTIVE=1 pm-team "Nightly regression hardening"
+```
+
+## CLI Flags
+
+| Flag                | Purpose                                                |
+|---------------------|--------------------------------------------------------|
+| `initiative`        | Positional description of the work initiative          |
+| `--blocker X`       | Add one or more blockers (repeat flag)                 |
+| `--autogen`         | Enable real Autogen agents (needs OPENAI_API_KEY)      |
+| `--project NAME`    | Use (or auto-create) existing project                  |
+| `--create-project NAME` | Force creation of a new project with NAME         |
+
+## Environment Variables
+
+| Variable                | Effect                                                          |
+|-------------------------|------------------------------------------------------------------|
+| `OPENAI_API_KEY`        | Enables real Autogen LLM mode                                   |
+| `OPENAI_MODEL_NAME`     | Override default model (gpt-4o-mini)                            |
+| `PM_TEAM_OUTPUT_ROOT`   | Change base outputs directory                                   |
+| `PM_TEAM_NONINTERACTIVE`| If `1`, skip interactive project selection; use `default`       |
+
 ## Roadmap
 
 1. Parse & merge Autogen JSON into internal model.
@@ -117,7 +163,21 @@ Each run creates a timestamped folder under `outputs/<project_slug>/` containing
 - `stakeholder_summary.txt`
 - `manifest.json`
 - `autogen/` raw LLM responses when `--autogen`
-Per project: `project.json` (metadata, run counter) and `audit_log.jsonl` (audit events).
+  Per project: `project.json` (metadata, run counter) and `audit_log.jsonl` (audit events).
+
+## Testing
+
+```bash
+pytest -q
+```
+
+Add `-k project` to run only project-related tests once added.
+
+## Retention & Cleanup (Planned)
+
+- Add a `--max-runs N` to prune oldest run folders per project.
+- Rotate `audit_log.jsonl` when surpassing size threshold (e.g., 10MB).
+- Optional `pm-team --prune` command (future) to enforce retention policy.
 
 ## License
 
