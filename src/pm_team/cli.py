@@ -19,6 +19,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--project", help="Project name to use (existing or new if --create-project)")
     p.add_argument("--create-project", help="Force creation of a new project with given name")
     p.add_argument("--list-projects", action="store_true", help="List existing projects and exit")
+    p.add_argument("--json", action="store_true", help="Emit machine-readable JSON to stdout (plan+release+summary)")
+    p.add_argument("--max-runs", type=int, default=None, help="If set, prune oldest run dirs beyond this count for the project")
     return p
 
 
@@ -67,28 +69,42 @@ def main(argv=None):  # pragma: no cover - thin wrapper
         except ImportError as e:
             print(f"[WARN] Autogen unavailable: {e}")
 
-    print("=== Sprint Plan ===")
-    print(f"Aggregate Risk Score: {result.get('aggregate_risk_score')}")
-    for t in result["plan"]["tasks"]:
-        print(f"{t['id']}: {t['title']} (pts={t['estimate_points']}, risk={t['risk']}, depends={t['depends_on']})")
+    import json as _json
+    output_path = persist_run(result, autogen_payload, args.initiative, project=project_name, max_runs=args.max_runs)
+    if args.json:
+        payload = {
+            "initiative": args.initiative,
+            "project": project_name,
+            "plan": result["plan"],
+            "release": result["release"],
+            "stakeholder_summary": result["stakeholder_summary"],
+            "metrics": result["metrics"],
+            "aggregate_risk_score": result.get("aggregate_risk_score"),
+            "artifacts_path": str(output_path),
+        }
+        print(_json.dumps(payload, ensure_ascii=False))
+    else:
+        print("=== Sprint Plan ===")
+        print(f"Aggregate Risk Score: {result.get('aggregate_risk_score')}")
+        for t in result["plan"]["tasks"]:
+            print(f"{t['id']}: {t['title']} (pts={t['estimate_points']}, risk={t['risk']}, depends={t['depends_on']})")
 
-    print("\n=== Release Summary ===")
-    print(f"Window: {result['release']['window']}")
-    print(f"Next Milestone: {result['release']['next_milestone']}")
-    print("Notes:")
-    for n in result["release"]["notes"]:
-        print(f" - {n}")
+        print("\n=== Release Summary ===")
+        print(f"Window: {result['release']['window']}")
+        print(f"Next Milestone: {result['release']['next_milestone']}")
+        print("Notes:")
+        for n in result["release"]["notes"]:
+            print(f" - {n}")
 
-    print("\n=== Stakeholder Summary ===")
-    print(result["stakeholder_summary"])
-    output_path = persist_run(result, autogen_payload, args.initiative, project=project_name)
-    print(f"\nArtifacts saved to: {output_path}")
+        print("\n=== Stakeholder Summary ===")
+        print(result["stakeholder_summary"])
+        print(f"\nArtifacts saved to: {output_path}")
 
-    if autogen_payload:
-        print("\n=== Autogen Outputs (Raw) ===")
-        for k, v in autogen_payload.items():
-            text = v if isinstance(v, str) else str(v)
-            print(f"[{k}] {text[:400]}")
+        if autogen_payload:
+            print("\n=== Autogen Outputs (Raw) ===")
+            for k, v in autogen_payload.items():
+                text = v if isinstance(v, str) else str(v)
+                print(f"[{k}] {text[:400]}")
 
 
 if __name__ == "__main__":  # pragma: no cover

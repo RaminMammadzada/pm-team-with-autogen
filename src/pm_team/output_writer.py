@@ -5,7 +5,7 @@ Default location: project root `outputs/` (created automatically if absent).
 Override with environment variable: `PM_TEAM_OUTPUT_ROOT`.
 """
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import json
 import os
 import re
@@ -41,7 +41,26 @@ def get_base_output_dir(default: Optional[Path] = None) -> Path:
     return out
 
 
-def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], initiative: str, base_dir: Optional[Path] = None, project: str = "default") -> Path:
+def _prune_old_runs(project_path: Path, keep: int):
+    if keep is None:
+        return
+    run_dirs: List[Path] = [d for d in project_path.iterdir() if d.is_dir()]
+    # sort by name (timestamp prefix ensures chronological order)
+    run_dirs.sort(key=lambda p: p.name)
+    excess = len(run_dirs) - keep
+    for d in run_dirs[:excess]:
+        try:
+            for sub in d.rglob('*'):
+                if sub.is_file():
+                    sub.unlink(missing_ok=True)  # type: ignore[arg-type]
+            for sub in sorted([p for p in d.rglob('*') if p.is_dir()], reverse=True):
+                sub.rmdir()
+            d.rmdir()
+        except Exception:
+            pass
+
+
+def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], initiative: str, base_dir: Optional[Path] = None, project: str = "default", max_runs: Optional[int] = None) -> Path:
     # Projects now create subdirectories under outputs/<project_slug>
     base_root = get_base_output_dir(base_dir)
     from .projects import project_dir, increment_run_counter  # local import to avoid circular
@@ -86,6 +105,9 @@ def persist_run(result: Dict[str, Any], autogen_raw: Optional[Dict[str, Any]], i
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
     # Update project metadata run counter
     increment_run_counter(project)
+    # Prune if over limit
+    if max_runs is not None:
+        _prune_old_runs(proj_dir, max_runs)
     return run_dir
 
 __all__ = ["persist_run", "get_base_output_dir"]

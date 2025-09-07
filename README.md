@@ -116,6 +116,12 @@ List projects (simple file system inspection):
 pm-team placeholder --list-projects
 ls outputs
 cat outputs/finance_revamp/project.json
+
+Prune old runs keeping last 5 only (per project):
+
+```bash
+pm-team --project FinanceRevamp "Refactor payment gateway" --max-runs 5 --json > latest.json
+```
 ```
 
 Non-interactive default project (CI / scripts):
@@ -134,6 +140,8 @@ PM_TEAM_NONINTERACTIVE=1 pm-team "Nightly regression hardening"
 | `--project NAME`        | Use (or auto-create) existing project             |
 | `--create-project NAME` | Force creation of a new project with NAME         |
 | `--list-projects`       | List existing projects and exit                   |
+| `--json`                | Emit machine-readable JSON instead of text UI     |
+| `--max-runs N`          | After writing artifacts prune to last N runs      |
 
 ## Environment Variables
 
