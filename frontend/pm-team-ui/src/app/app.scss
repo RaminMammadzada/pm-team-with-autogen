@@ -328,17 +328,23 @@ table.tasks th {
   padding: 0.4rem 0.55rem 0.6rem;
   font-size: 0.7rem;
   max-width: 640px;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
-.chat-messages .msg.agent .bubble { background:#f8f9fb; border-color:#d5dbe3; }
-.chat-messages .msg.user .bubble { background:#e6f3ff; border-color:#b5d8ff; }
+.chat-messages .msg.agent .bubble {
+  background: #f8f9fb;
+  border-color: #d5dbe3;
+}
+.chat-messages .msg.user .bubble {
+  background: #e6f3ff;
+  border-color: #b5d8ff;
+}
 .chat-messages .sender {
   display: inline-block;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.55rem;
   letter-spacing: 0.05em;
-  color:#39507a;
+  color: #39507a;
   margin-bottom: 0.15rem;
 }
 .chat-messages time {
@@ -369,7 +375,10 @@ table.tasks th {
   cursor: pointer;
   font-weight: 600;
 }
-.chat-input button[disabled] { opacity:0.6; cursor:not-allowed; }
+.chat-input button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 @media (max-width: 800px) {
   .layout {
     flex-direction: column;
