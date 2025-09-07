@@ -1,0 +1,5 @@
+# Placeholder requirements. Add 'pyautogen' (or 'autogen') when integrating real library.
+# pyautogen
+pytest>=8.0.0
+autogen>=0.3.0
+openai>=1.0.0

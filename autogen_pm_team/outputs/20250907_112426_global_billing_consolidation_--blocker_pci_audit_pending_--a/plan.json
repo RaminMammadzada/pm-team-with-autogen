@@ -1,0 +1,78 @@
+{
+  "initiative": "Global billing consolidation --blocker PCI audit pending --autogen",
+  "generated_at": "2025-09-07T11:24:12.311329+00:00",
+  "sprint_goal": "Deliver foundation for: Global billing consolidation --blocker PCI audit pending --a",
+  "velocity_assumption": 30,
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Requirements Clarification (Global billing consolidation -)",
+      "estimate_points": 3,
+      "risk": "low",
+      "risk_score": 3,
+      "depends_on": []
+    },
+    {
+      "id": "T2",
+      "title": "Architecture Draft (Global billing consolidation -)",
+      "estimate_points": 3,
+      "risk": "low",
+      "risk_score": 3,
+      "depends_on": [
+        "T1"
+      ]
+    },
+    {
+      "id": "T3",
+      "title": "Data Model Design (Global billing consolidation -)",
+      "estimate_points": 3,
+      "risk": "low",
+      "risk_score": 3,
+      "depends_on": [
+        "T2"
+      ]
+    },
+    {
+      "id": "T4",
+      "title": "Implementation (Global billing consolidation -)",
+      "estimate_points": 8,
+      "risk": "medium",
+      "risk_score": 24,
+      "depends_on": [
+        "T3"
+      ]
+    },
+    {
+      "id": "T5",
+      "title": "Testing & QA (Global billing consolidation -)",
+      "estimate_points": 3,
+      "risk": "medium",
+      "risk_score": 9,
+      "depends_on": [
+        "T4"
+      ]
+    },
+    {
+      "id": "T6",
+      "title": "Deployment Prep (Global billing consolidation -)",
+      "estimate_points": 3,
+      "risk": "low",
+      "risk_score": 3,
+      "depends_on": [
+        "T5"
+      ]
+    },
+    {
+      "id": "M7",
+      "title": "Mitigate blocker: PCI audit pending",
+      "estimate_points": 2,
+      "risk": "high",
+      "risk_score": 12,
+      "depends_on": []
+    }
+  ],
+  "blockers": [
+    "PCI audit pending"
+  ],
+  "aggregate_risk_score": 57
+}

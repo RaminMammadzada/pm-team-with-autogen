@@ -1,0 +1,12 @@
+{
+  // Minimal config + explicit terminal auto-approve structure
+  "chat.tools.autoApprove": true,
+  "chat.tools": { "autoApprove": true, "terminal": { "autoApprove": true } },
+  "chat.agent.maxRequests": 100,
+  "github.copilot.security.commandExecution": "allow",
+  "github.copilot.security.fileSystemRead": "allow",
+  "github.copilot.security.fileSystemWrite": "allow",
+  "chat.checkpoints.enabled": false,
+  "chat.editRequests": "none",
+  "editor.inlineSuggest.enabled": true
+}
