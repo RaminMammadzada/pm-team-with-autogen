@@ -72,7 +72,9 @@
           <input name="initiative" placeholder="Describe a new initiative focus" />
           <button type="submit">Generate Initiative</button>
         </form>
-        <div *ngIf="!loadingRuns() && !runs().length" class="empty">No initiatives yet. Generate the first one.</div>
+        <div *ngIf="!loadingRuns() && !runs().length" class="empty">
+          No initiatives yet. Generate the first one.
+        </div>
       </section>
 
       <section *ngIf="selectedRun() as run">
@@ -83,8 +85,16 @@
           <div><strong>Types:</strong> {{ s.types }}</div>
           <div><strong>High Priority:</strong> {{ s.highPrio }}</div>
           <div class="links" *ngIf="selectedProject() as p">
-            <a target="_blank" [href]="'/api/projects/' + p.slug + '/runs/' + run.run_id + '/artifact/plan.json'">plan.json</a>
-            <a target="_blank" [href]="'/api/projects/' + p.slug + '/runs/' + run.run_id + '/artifact/metrics.json'">metrics.json</a>
+            <a
+              target="_blank"
+              [href]="'/api/projects/' + p.slug + '/runs/' + run.run_id + '/artifact/plan.json'"
+              >plan.json</a
+            >
+            <a
+              target="_blank"
+              [href]="'/api/projects/' + p.slug + '/runs/' + run.run_id + '/artifact/metrics.json'"
+              >metrics.json</a
+            >
           </div>
         </div>
         <div *ngIf="loadingPlan()">Loading plan…</div>

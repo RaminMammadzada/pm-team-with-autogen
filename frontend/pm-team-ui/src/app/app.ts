@@ -32,11 +32,15 @@ export class App {
     const tasks = this.planTasks();
     if (!tasks.length) return null;
     const total = tasks.length;
-    const risks = tasks.map(t => (t as any).risk_exposure).filter((v: any) => typeof v === 'number');
-    const avgRisk = risks.length ? risks.reduce((a: number,b: number)=>a+b,0)/risks.length : null;
-    const types = new Set(tasks.map(t => (t as any).type).filter(Boolean));
-    const priorities = tasks.map(t => (t as any).priority).filter(Boolean);
-    const highPrio = priorities.filter(p => /high/i.test(p)).length;
+    const risks = tasks
+      .map((t) => (t as any).risk_exposure)
+      .filter((v: any) => typeof v === 'number');
+    const avgRisk = risks.length
+      ? risks.reduce((a: number, b: number) => a + b, 0) / risks.length
+      : null;
+    const types = new Set(tasks.map((t) => (t as any).type).filter(Boolean));
+    const priorities = tasks.map((t) => (t as any).priority).filter(Boolean);
+    const highPrio = priorities.filter((p) => /high/i.test(p)).length;
     return { total, avgRisk, types: types.size, highPrio };
   });
 
@@ -165,7 +169,7 @@ export class App {
     const idx = raw.indexOf('_');
     if (idx === -1) return raw;
     const rest = raw.substring(idx + 1).replace(/_/g, ' ');
-    return rest.length > 50 ? rest.slice(0,47) + '…' : rest;
+    return rest.length > 50 ? rest.slice(0, 47) + '…' : rest;
   }
 
   protected fmt(n: any): string {

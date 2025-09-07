@@ -270,12 +270,32 @@ table.tasks {
   flex-wrap: wrap;
   margin: 8px 0 12px;
   font-size: 12px;
-  > div { background:#f5f7fa; padding:6px 10px; border-radius:4px; }
-  .links { background: transparent; padding:0; display:flex; gap:8px; align-items:center; }
-  a { color:#0b67c2; text-decoration:none; font-weight:500; }
-  a:hover { text-decoration:underline; }
+  > div {
+    background: #f5f7fa;
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+  .links {
+    background: transparent;
+    padding: 0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  a {
+    color: #0b67c2;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
 }
-.empty { color:#777; font-style: italic; margin-top:4px; }
+.empty {
+  color: #777;
+  font-style: italic;
+  margin-top: 4px;
+}
 table.tasks th,
 table.tasks td {
   border: 1px solid #ddd;
