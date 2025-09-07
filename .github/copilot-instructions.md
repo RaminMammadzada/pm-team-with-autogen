@@ -29,6 +29,44 @@ Frontend (Angular 20, standalone components & signals):
 - Chat modes toolbar (query vs mutation modes) + contextual inputs.
 - Auto-scroll effect for conversation continuity.
 
+### Technology Stack (Current & Planned)
+**Backend**
+- Language: Python 3.11+
+- Framework: FastAPI (async, typed request models)
+- Server: Uvicorn (dev reload)
+- Persistence: JSON artifact files (plan / release / metrics / stakeholder / conversation)
+- AI Layers: OpenAI Chat Completions, optional Autogen (single-turn), heuristic fallback (`ConversableAgentBase`)
+- Config: Environment variables (no hardcoded secrets)
+- Packaging: `pyproject.toml` + `requirements.txt` (migration path to fully pinned lock)
+
+**Frontend**
+- Framework: Angular 20 (standalone APIs, no NgModules)
+- Language: TypeScript (strict)
+- State: Angular Signals (lightweight reactive store)
+- Styling: SCSS
+- Networking: Angular `fetch`/`HttpClient` (service abstraction)
+- UI Patterns: Optimistic updates, scroll anchoring, mode‑driven inputs
+
+**Tooling & Quality**
+- Git + Conventional commit prefixes
+- Planned tests: `pytest` (unit for pure functions, integration for chat/mutations)
+- Lint / Type Safety: Python type hints (future mypy), TS strict compiler
+- Observability (future): structured log lines, mutation audit ledger
+
+**Planned Enhancements**
+- Streaming (SSE or chunked HTTP)
+- Embedding / retrieval augmentation layer
+- Multi-turn planner/critic agents
+- Snapshot version history (immutable plan lineage)
+- Analytics: burndown simulation, velocity accuracy metrics, risk trend charts
+- Security: secret scanning pre-commit, role-based view constraints
+
+**Design Principles Recap**
+- Graceful degradation across intelligence layers
+- Pure functions for domain mutations; side-effects isolated to API boundary
+- Minimal surface first; additive evolution (avoid breaking schemas)
+- Human-inspectable artifacts to accelerate iteration
+
 ---
 ## 3. Key Domain Concepts
 | Concept | Description |
