@@ -124,7 +124,7 @@
                   <code>{{ m.id }}</code>
                   <ul>
                     <li *ngFor="let entry of m.changes | keyvalue">
-                      {{ entry.key }}: {{ entry.value.old }} → {{ entry.value.new }}
+                      {{ entry.key }}: {{ $any(entry.value).old }} → {{ $any(entry.value).new }}
                     </li>
                   </ul>
                 </li>
