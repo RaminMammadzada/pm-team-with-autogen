@@ -33,15 +33,61 @@ export class App {
     this.fetchProjects();
   }
 
+  protected createProject(ev: Event) {
+    ev.preventDefault();
+    const form = ev.target as HTMLFormElement;
+    const fd = new FormData(form);
+    const name = (fd.get('name') || '').toString().trim();
+    if (!name) {
+      this.notify.warn('Name is required');
+      return;
+    }
+    const tagsRaw = (fd.get('tags') || '').toString().trim();
+    const tags = tagsRaw
+      ? tagsRaw
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : undefined;
+    this.data
+      .createProject({
+        name,
+        description: opt(fd.get('description')),
+        domain: opt(fd.get('domain')),
+        owner: opt(fd.get('owner')),
+        priority: opt(fd.get('priority')),
+        tags,
+      })
+      .subscribe({
+        next: (proj) => {
+          this.notify.info('Project created');
+          form.reset();
+          this.fetchProjects();
+          // select the newly created project
+          setTimeout(() => {
+            const found = this.projects().find((p) => p.slug === (proj as any).slug);
+            if (found) this.selectProject(found);
+          }, 300);
+        },
+        error: () => this.notify.error('Cannot create project'),
+      });
+
+    function opt(v: FormDataEntryValue | null): string | undefined {
+      if (v == null) return undefined;
+      const s = v.toString().trim();
+      return s ? s : undefined;
+    }
+  }
+
   protected fetchProjects() {
     this.loadingProjects.set(true);
     this.data.projects().subscribe({
-      next: data => {
+      next: (data) => {
         this.projects.set(data);
         if (!this.selectedProject() && data.length) this.selectProject(data[0]);
       },
       error: () => this.notify.error('Cannot load projects'),
-      complete: () => this.loadingProjects.set(false)
+      complete: () => this.loadingProjects.set(false),
     });
   }
 
@@ -57,12 +103,14 @@ export class App {
     if (!proj) return;
     this.loadingRuns.set(true);
     this.data.runs(proj.slug).subscribe({
-      next: data => {
-        this.runs.set(data.map(r => ({ run_id: (r as any).run_id, created_at: (r as any).created_at })));
+      next: (data) => {
+        this.runs.set(
+          data.map((r) => ({ run_id: (r as any).run_id, created_at: (r as any).created_at })),
+        );
         if (!this.selectedRun() && data.length) this.selectRun(this.runs()[0]);
       },
       error: () => this.notify.error('Cannot load runs'),
-      complete: () => this.loadingRuns.set(false)
+      complete: () => this.loadingRuns.set(false),
     });
   }
 
@@ -78,9 +126,9 @@ export class App {
     if (!proj || !run) return;
     this.loadingPlan.set(true);
     this.data.plan(proj.slug, run.run_id).subscribe({
-      next: data => this.plan.set(data),
+      next: (data) => this.plan.set(data),
       error: () => this.notify.error('Cannot load plan'),
-      complete: () => this.loadingPlan.set(false)
+      complete: () => this.loadingPlan.set(false),
     });
   }
 }

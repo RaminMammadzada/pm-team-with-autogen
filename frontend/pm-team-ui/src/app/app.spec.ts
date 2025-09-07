@@ -9,8 +9,8 @@ describe('App', () => {
       imports: [App],
       providers: [
         provideHttpClient(),
-        { provide: FRONTEND_ENV, useValue: { apiBase: 'http://test.local' } }
-      ]
+        { provide: FRONTEND_ENV, useValue: { apiBase: 'http://test.local' } },
+      ],
     }).compileComponents();
   });
 

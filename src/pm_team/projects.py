@@ -12,7 +12,7 @@ outputs/
 This module centralizes project creation, listing, and metadata updates.
 """
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime, UTC
 import json
 import re
@@ -58,6 +58,7 @@ def list_projects() -> List[Dict]:
 
 
 def ensure_project(name: str) -> Dict:
+    """Ensure a minimal project exists (legacy helper)."""
     d = project_dir(name)
     d.mkdir(parents=True, exist_ok=True)
     meta_p = d / "project.json"
@@ -68,6 +69,30 @@ def ensure_project(name: str) -> Dict:
             pass
     meta = {"name": name, "slug": _slug(name), "created_at": datetime.now(UTC).isoformat(), "runs": 0}
     meta_p.write_text(json.dumps(meta, indent=2))
+    return meta
+
+
+def create_project(name: str, **kwargs: Any) -> Dict:
+    """Create a project with extended metadata.
+
+    Existing project slug raises ValueError.
+    Extra keyword fields are merged into the metadata file.
+    """
+    d = project_dir(name)
+    if d.exists() and (d / "project.json").exists():
+        raise ValueError("project already exists")
+    d.mkdir(parents=True, exist_ok=True)
+    meta: Dict[str, Any] = {
+        "name": name,
+        "slug": _slug(name),
+        "created_at": datetime.now(UTC).isoformat(),
+        "runs": 0,
+    }
+    # Only include provided non-null extras
+    for k, v in kwargs.items():
+        if v is not None:
+            meta[k] = v
+    (d / "project.json").write_text(json.dumps(meta, indent=2))
     return meta
 
 
@@ -132,6 +157,7 @@ def select_or_create_interactive() -> str:
 __all__ = [
     "list_projects",
     "ensure_project",
+    "create_project",
     "increment_run_counter",
     "select_or_create_interactive",
     "project_dir",

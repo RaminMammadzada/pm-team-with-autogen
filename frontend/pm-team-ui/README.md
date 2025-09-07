@@ -14,34 +14,41 @@ Angular 20 standalone dashboard for the PM Team multi-project planning system. I
 ## Getting Started
 
 Prerequisites:
+
 - Node.js 18+ (LTS recommended)
 - Backend running locally on `http://localhost:8000` (start with `uvicorn pm_team.api:app --reload` from repo root)
 
 Install deps:
+
 ```bash
 npm install
 ```
 
 Run dev server:
+
 ```bash
 npx ng serve
 ```
+
 Visit http://localhost:4200
 
 If your backend runs on a different host/port, you can inject a global before bundle load (temporary approach) in `index.html`:
+
 ```html
-<script>window.__PM_TEAM_API__ = 'http://127.0.0.1:8001';</script>
+<script>
+  window.__PM_TEAM_API__ = 'http://127.0.0.1:8001';
+</script>
 ```
 
 Better environment handling (Angular `environment.ts`) can be added later.
 
 ## Backend API Contract (Consumed Endpoints)
 
-| Endpoint | Purpose | Expected Shape (abridged) |
-|----------|---------|---------------------------|
-| `GET /projects` | List projects | `[ { slug, name, created_at? } ]` |
-| `GET /projects/:slug/runs` | List runs (latest first) | `[ { run_id, created_at? } ]` |
-| `GET /projects/:slug/runs/:run_id/artifact/plan.json` | Sprint plan artifact | `{ tasks: [ { id, title, type, priority, wsjf_score, risk_exposure, status } ] }` |
+| Endpoint                                              | Purpose                  | Expected Shape (abridged)                                                         |
+| ----------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `GET /projects`                                       | List projects            | `[ { slug, name, created_at? } ]`                                                 |
+| `GET /projects/:slug/runs`                            | List runs (latest first) | `[ { run_id, created_at? } ]`                                                     |
+| `GET /projects/:slug/runs/:run_id/artifact/plan.json` | Sprint plan artifact     | `{ tasks: [ { id, title, type, priority, wsjf_score, risk_exposure, status } ] }` |
 
 Errors are logged to `console.error` only (no in-app toasts yet).
 
@@ -72,6 +79,7 @@ Current tests cover component creation & header render. Add more tests by placin
 This app uses Angular standalone components (no NgModule). Root component (`app.ts`) directly imports `HttpClientModule`. Styling is minimal and scoped in `app.scss`.
 
 ---
+
 Generated originally by Angular CLI 20.2.2 and then customized for PM Team.
 
 ## Development server

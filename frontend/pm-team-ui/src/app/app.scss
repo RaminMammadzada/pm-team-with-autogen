@@ -41,6 +41,106 @@ aside h2 {
   font-size: 1rem;
   margin-top: 0;
 }
+details.create-form {
+  margin-bottom: 0.75rem;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+details.create-form > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.55rem 0.7rem;
+  background: linear-gradient(#f7f7f7, #ececec);
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #e2e2e2;
+}
+details.create-form[open] > summary {
+  border-bottom-color: #ddd;
+}
+details.create-form form {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem 0.7rem 0.75rem;
+  grid-template-columns: 1fr;
+}
+details.create-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #444;
+  gap: 0.25rem;
+}
+details.create-form input,
+details.create-form textarea {
+  font: inherit;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid #c9c9c9;
+  border-radius: 4px;
+  background: #fcfcfc;
+  resize: vertical;
+}
+details.create-form input:focus,
+details.create-form textarea:focus {
+  outline: 2px solid #90b4ff;
+  outline-offset: 1px;
+  background: #fff;
+}
+details.create-form button[type='submit'] {
+  margin-top: 0.2rem;
+  background: #3758d5;
+  color: #fff;
+  border: 1px solid #2f4bb5;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-self: start;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+details.create-form button[type='submit']:hover {
+  background: #2f4bb5;
+}
+details.create-form button[type='submit']:active {
+  background: #273f99;
+}
+/* Subtle transition */
+details.create-form,
+details.create-form input,
+details.create-form textarea,
+details.create-form button[type='submit'] {
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Narrow screens: two-column form if space allows */
+@media (min-width: 480px) {
+  details.create-form form {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+  details.create-form label {
+    font-size: 0.6rem;
+  }
+  details.create-form label:has(textarea) {
+    grid-column: 1 / -1;
+  }
+  details.create-form button[type='submit'] {
+    grid-column: 1 / -1;
+  }
+}
 aside ul {
   list-style: none;
   padding: 0;

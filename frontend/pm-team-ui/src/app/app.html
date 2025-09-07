@@ -6,6 +6,36 @@
   <section class="layout">
     <aside>
       <h2>Projects</h2>
+      <details class="create-form" open>
+        <summary>Create Project</summary>
+        <form (submit)="createProject($event)" novalidate>
+          <label>
+            Name
+            <input name="name" required />
+          </label>
+          <label>
+            Description
+            <textarea name="description" rows="2"></textarea>
+          </label>
+          <label>
+            Domain
+            <input name="domain" />
+          </label>
+          <label>
+            Owner
+            <input name="owner" />
+          </label>
+          <label>
+            Priority
+            <input name="priority" placeholder="e.g. High / Medium / Low" />
+          </label>
+          <label>
+            Tags (comma separated)
+            <input name="tags" placeholder="tag1, tag2" />
+          </label>
+          <button type="submit">Create</button>
+        </form>
+      </details>
       <div *ngIf="loadingProjects()">Loading projects…</div>
       <ul>
         <li *ngFor="let p of projects()" [class.active]="p.slug === selectedProject()?.slug">
