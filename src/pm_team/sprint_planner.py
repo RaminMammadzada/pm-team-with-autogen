@@ -11,29 +11,42 @@ class SprintPlanner(ConversableAgentBase):
         )
 
     def plan(self, initiative: str) -> Dict[str, Any]:
+        # Base template enhanced with type hints
         base_tasks = [
-            "Requirements Clarification",
-            "Architecture Draft",
-            "Data Model Design",
-            "Implementation",
-            "Testing & QA",
-            "Deployment Prep",
+            ("Requirements Clarification", "analysis"),
+            ("Architecture Draft", "design"),
+            ("Data Model Design", "design"),
+            ("Implementation", "feature"),
+            ("Testing & QA", "quality"),
+            ("Deployment Prep", "ops"),
         ]
         tasks = []
         risk_map = {"low": 1, "medium": 3, "high": 6}
-        for i, t in enumerate(base_tasks, start=1):
+        default_business_value = 8
+        default_time_criticality = 5
+        default_risk_reduction = 3
+        for i, (t, t_type) in enumerate(base_tasks, start=1):
             risk = "medium" if i in (4, 5) else "low"
-            estimate = 3 if i not in (4,) else 8
-            tasks.append(
-                {
-                    "id": f"T{i}",
-                    "title": f"{t} ({initiative[:30]})",
-                    "estimate_points": estimate,
-                    "risk": risk,
-                    "risk_score": risk_map[risk] * estimate,
-                    "depends_on": [f"T{i-1}"] if i > 1 else [],
-                }
-            )
+            estimate = 8 if t == "Implementation" else 3
+            prob = 0.2 if risk == "low" else 0.4
+            impact = 2 if risk == "low" else 4
+            exposure = prob * impact * estimate
+            wsjf = (default_business_value + default_time_criticality + default_risk_reduction) / max(estimate, 1)
+            tasks.append({
+                "id": f"T{i}",
+                "title": f"{t} ({initiative[:30]})",
+                "type": t_type,
+                "estimate_points": estimate,
+                "risk": risk,
+                "risk_score": risk_map[risk] * estimate,
+                "risk_probability": prob,
+                "risk_impact": impact,
+                "risk_exposure": exposure,
+                "wsjf": round(wsjf, 2),
+                "priority": i,  # initial ordering
+                "acceptance": "TBD",
+                "depends_on": [f"T{i-1}"] if i > 1 else [],
+            })
         aggregate_risk = sum(t["risk_score"] for t in tasks)
         plan = {
             "initiative": initiative,
@@ -51,9 +64,16 @@ class SprintPlanner(ConversableAgentBase):
         mitigation_task = {
             "id": f"M{len(plan['tasks'])+1}",
             "title": f"Mitigate blocker: {blocker[:40]}",
+            "type": "mitigation",
             "estimate_points": 2,
             "risk": "high",
             "risk_score": 2 * 6,
+            "risk_probability": 0.5,
+            "risk_impact": 5,
+            "risk_exposure": 0.5 * 5 * 2,
+            "wsjf": round((5 + 5 + 5) / 2, 2),  # placeholder scoring for mitigation
+            "priority": len(plan['tasks']) + 1,
+            "acceptance": "Mitigation effective",
             "depends_on": [],
         }
         plan["tasks"].append(mitigation_task)

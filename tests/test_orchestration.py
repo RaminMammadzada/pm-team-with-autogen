@@ -10,6 +10,9 @@ def test_basic_run(tmp_path):
     assert len(result["plan"]["tasks"]) >= 6
     assert result["metrics"]["plans_created"] == 1
     assert result["metrics"]["blockers_recorded"] == 1
+    # New enriched fields present
+    first = result["plan"]["tasks"][0]
+    assert {"wsjf", "risk_exposure", "type"}.issubset(first.keys())
 
     content = audit_file.read_text().strip().splitlines()
     assert any("PLAN_CREATED" in line for line in content)
