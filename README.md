@@ -113,6 +113,7 @@ pm-team --project FinanceRevamp "Add billing integration" --blocker compliance -
 List projects (simple file system inspection):
 
 ```bash
+pm-team placeholder --list-projects
 ls outputs
 cat outputs/finance_revamp/project.json
 ```
@@ -125,22 +126,23 @@ PM_TEAM_NONINTERACTIVE=1 pm-team "Nightly regression hardening"
 
 ## CLI Flags
 
-| Flag                | Purpose                                                |
-|---------------------|--------------------------------------------------------|
-| `initiative`        | Positional description of the work initiative          |
-| `--blocker X`       | Add one or more blockers (repeat flag)                 |
-| `--autogen`         | Enable real Autogen agents (needs OPENAI_API_KEY)      |
-| `--project NAME`    | Use (or auto-create) existing project                  |
+| Flag                    | Purpose                                           |
+| ----------------------- | ------------------------------------------------- |
+| `initiative`            | Positional description of the work initiative     |
+| `--blocker X`           | Add one or more blockers (repeat flag)            |
+| `--autogen`             | Enable real Autogen agents (needs OPENAI_API_KEY) |
+| `--project NAME`        | Use (or auto-create) existing project             |
 | `--create-project NAME` | Force creation of a new project with NAME         |
+| `--list-projects`       | List existing projects and exit                   |
 
 ## Environment Variables
 
-| Variable                | Effect                                                          |
-|-------------------------|------------------------------------------------------------------|
-| `OPENAI_API_KEY`        | Enables real Autogen LLM mode                                   |
-| `OPENAI_MODEL_NAME`     | Override default model (gpt-4o-mini)                            |
-| `PM_TEAM_OUTPUT_ROOT`   | Change base outputs directory                                   |
-| `PM_TEAM_NONINTERACTIVE`| If `1`, skip interactive project selection; use `default`       |
+| Variable                 | Effect                                                    |
+| ------------------------ | --------------------------------------------------------- |
+| `OPENAI_API_KEY`         | Enables real Autogen LLM mode                             |
+| `OPENAI_MODEL_NAME`      | Override default model (gpt-4o-mini)                      |
+| `PM_TEAM_OUTPUT_ROOT`    | Change base outputs directory                             |
+| `PM_TEAM_NONINTERACTIVE` | If `1`, skip interactive project selection; use `default` |
 
 ## Roadmap
 

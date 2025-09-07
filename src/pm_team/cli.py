@@ -18,12 +18,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--autogen", action="store_true", help="Use real Autogen agents if available")
     p.add_argument("--project", help="Project name to use (existing or new if --create-project)")
     p.add_argument("--create-project", help="Force creation of a new project with given name")
+    p.add_argument("--list-projects", action="store_true", help="List existing projects and exit")
     return p
 
 
 def main(argv=None):  # pragma: no cover - thin wrapper
     parser = build_parser()
     args = parser.parse_args(argv)
+    # Early listing mode
+    if args.list_projects:
+        from .projects import list_projects
+        projects = list_projects()
+        if not projects:
+            print("<no projects>")
+            return 0
+        print("Projects:")
+        for p in projects:
+            print(f" - {p['name']} (slug={p['slug']}, runs={p.get('runs', 0)})")
+        return 0
     # Determine project name (interactive if not provided)
     project_name = None
     if args.create_project:
