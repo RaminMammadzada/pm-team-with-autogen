@@ -1,4 +1,10 @@
-# Autogen Project Management Agent Team
+> NOTE: This README content has been moved to the repository root `README.md`. This file is retained only as a pointer.
+
+# (Moved) Autogen Project Management Agent Team
+
+Primary documentation now lives at project root. Consider deleting this file or keeping it minimal.
+
+Legacy content below (may be stale):
 
 A dual-mode (stub + real Autogen) multi-agent example for project management workflows. It provides:
 
