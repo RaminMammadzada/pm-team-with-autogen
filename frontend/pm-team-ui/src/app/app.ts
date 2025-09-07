@@ -1,45 +1,20 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Component, computed, inject, signal } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
-
-interface ProjectMeta {
-  slug: string;
-  name: string;
-  created_at?: string;
-  description?: string;
-}
-interface RunMeta {
-  run_id: string;
-  created_at?: string;
-}
-interface PlanTask {
-  id: string;
-  title: string;
-  type?: string;
-  priority?: string;
-  wsjf_score?: number;
-  risk_exposure?: number;
-  status?: string;
-}
-interface PlanArtifact {
-  tasks?: PlanTask[];
-  [k: string]: any;
-}
+import { ToastContainerComponent } from './components/toast-container.component';
+import { DataService, ProjectMeta, RunMeta, PlanArtifact } from './services/data.service';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HttpClientModule, NgFor, NgIf],
+  imports: [NgFor, NgIf, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   // Basic app signals
   protected readonly title = signal('PM Team Dashboard');
-  private readonly http = inject(HttpClient);
-
-  // API base (allow override via window or env baked at build time later)
-  protected readonly apiBase = signal((window as any).__PM_TEAM_API__ || 'http://localhost:8000');
+  private readonly data = inject(DataService);
+  private readonly notify = inject(NotificationService);
 
   // Data signals
   protected readonly loadingProjects = signal(false);
@@ -60,15 +35,13 @@ export class App {
 
   protected fetchProjects() {
     this.loadingProjects.set(true);
-    this.http.get<ProjectMeta[]>(`${this.apiBase()}/projects`).subscribe({
-      next: (data) => {
+    this.data.projects().subscribe({
+      next: data => {
         this.projects.set(data);
-        if (!this.selectedProject() && data.length) {
-          this.selectProject(data[0]);
-        }
+        if (!this.selectedProject() && data.length) this.selectProject(data[0]);
       },
-      error: (err) => console.error('Failed to load projects', err),
-      complete: () => this.loadingProjects.set(false),
+      error: () => this.notify.error('Cannot load projects'),
+      complete: () => this.loadingProjects.set(false)
     });
   }
 
@@ -83,16 +56,13 @@ export class App {
     const proj = this.selectedProject();
     if (!proj) return;
     this.loadingRuns.set(true);
-    this.http.get<any[]>(`${this.apiBase()}/projects/${proj.slug}/runs`).subscribe({
-      next: (data) => {
-        // Expect list of run manifests with run_id
-        this.runs.set(data.map((r) => ({ run_id: r.run_id, created_at: r.created_at })));
-        if (!this.selectedRun() && data.length) {
-          this.selectRun(this.runs()[0]);
-        }
+    this.data.runs(proj.slug).subscribe({
+      next: data => {
+        this.runs.set(data.map(r => ({ run_id: (r as any).run_id, created_at: (r as any).created_at })));
+        if (!this.selectedRun() && data.length) this.selectRun(this.runs()[0]);
       },
-      error: (err) => console.error('Failed to load runs', err),
-      complete: () => this.loadingRuns.set(false),
+      error: () => this.notify.error('Cannot load runs'),
+      complete: () => this.loadingRuns.set(false)
     });
   }
 
@@ -107,14 +77,10 @@ export class App {
     const run = this.selectedRun();
     if (!proj || !run) return;
     this.loadingPlan.set(true);
-    this.http
-      .get<PlanArtifact>(
-        `${this.apiBase()}/projects/${proj.slug}/runs/${run.run_id}/artifact/plan.json`,
-      )
-      .subscribe({
-        next: (data) => this.plan.set(data),
-        error: (err) => console.error('Failed to load plan', err),
-        complete: () => this.loadingPlan.set(false),
-      });
+    this.data.plan(proj.slug, run.run_id).subscribe({
+      next: data => this.plan.set(data),
+      error: () => this.notify.error('Cannot load plan'),
+      complete: () => this.loadingPlan.set(false)
+    });
   }
 }
