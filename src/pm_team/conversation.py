@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Tuple
 import json
 from datetime import datetime, UTC
 from .base import ConversableAgentBase, Message as AgentMessage
+import math
 
 CONVO_FILENAME = "conversation.json"
 
@@ -54,16 +55,62 @@ def append_messages(run_dir: Path, new_messages: List[Dict[str, Any]]) -> List[D
     return history
 
 
-def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
-    """Append a user message and generate an agent reply.
+def _load_artifact_json(run_dir: Path, name: str) -> Any:
+    p = run_dir / name
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return None
 
-    Currently stateless instantiation each call; replays history into agent.
-    """
+
+def _build_domain_summary(run_dir: Path) -> str:
+    plan = _load_artifact_json(run_dir, "plan.json") or {}
+    release = _load_artifact_json(run_dir, "release.json") or {}
+    metrics = _load_artifact_json(run_dir, "metrics.json") or {}
+    initiative = plan.get("initiative") or (run_dir.name.split("_", 1)[-1])
+    tasks = plan.get("tasks", [])
+    blockers = plan.get("blockers", [])
+    agg_risk = plan.get("aggregate_risk_score")
+    total_points = sum(t.get("estimate_points", 0) for t in tasks) if tasks else 0
+    high_risk = [t for t in tasks if t.get("risk") == "high" or (t.get("risk_score", 0) >= 18)]
+    # Sort tasks by priority (fallback to id)
+    tasks_sorted = sorted(tasks, key=lambda t: (t.get("priority", 9999), t.get("id", "")))
+    top_lines = [f"  - {t.get('id')}: {t.get('title')} (risk={t.get('risk')}, pts={t.get('estimate_points')})" for t in tasks_sorted[:10]]
+    summary_lines = [
+        f"INITIATIVE: {initiative}",
+        f"TASK_COUNT: {len(tasks)}",
+        f"TOTAL_POINTS: {total_points}",
+        f"AGG_RISK: {agg_risk}",
+        f"HIGH_RISK_TASKS: {len(high_risk)}",
+        f"BLOCKERS: {', '.join(blockers) if blockers else 'None'}",
+        "TOP_TASKS:",
+        *top_lines,
+    ]
+    # Basic metrics augmentation (if present)
+    if metrics:
+        velocity = metrics.get("velocity") or metrics.get("velocity_assumption") or plan.get("velocity_assumption")
+        if velocity:
+            sprints = math.ceil(total_points / max(velocity, 1)) if total_points else 0
+            summary_lines.append(f"EST_SPRINTS: {sprints}")
+    if release:
+        rel_notes = release.get("release_notes") or []
+        summary_lines.append(f"RELEASE_ITEMS: {len(rel_notes)}")
+    return "\n".join(l for l in summary_lines if l is not None)
+
+
+def agent_reply(run_dir: Path, project: str, user_text: str) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    """Append a user message and generate an agent reply with artifact context."""
     user_message = {"sender": "user", "content": user_text, "timestamp": _now_iso()}
     history = append_messages(run_dir, [user_message])
 
-    # Build agent and replay
-    agent = ConversableAgentBase(name="planning_agent", system_prompt="You are a planning assistant that provides concise, actionable responses.")
+    domain_summary = _build_domain_summary(run_dir)
+    agent = ConversableAgentBase(
+        name="planning_agent",
+        system_prompt="You are a planning assistant that provides concise, actionable responses grounded in the current initiative plan.",
+        domain_knowledge=domain_summary,
+    )
     for m in history:
         agent.receive(AgentMessage(sender=m['sender'], content=m['content'], timestamp=datetime.now(UTC)))
     reply_agent_msg = agent.respond(user_text)
